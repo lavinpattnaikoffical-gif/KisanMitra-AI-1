@@ -85,7 +85,6 @@ export default function App() {
   const [products, setProducts] = useState<MarketProduct[]>(INITIAL_PRODUCTS);
   const [listings, setListings] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
 
   // Load from local storage and backend
   useEffect(() => {
