@@ -124,23 +124,41 @@ Instructions:
       contextData += `Current Weather: ${weatherStr}\n\n`;
 
       for (const zone of farm.zones) {
-        contextData += `  Zone: ${zone.name} (Crop: ${zone.cropType}, Threshold: ${zone.moistureThreshold}%)\n`;
+        contextData += `  Zone: ${zone.name} (Crop: ${zone.cropType}, Irrigation: ${zone.irrigationType}, Threshold: ${zone.moistureThreshold}%)\n`;
         
-        // Latest reading
+        // Latest reading — includes ALL sensor data
         const latestReading = await prisma.sensorReading.findFirst({
           where: { zoneId: zone.id },
           orderBy: { createdAt: 'desc' },
+          include: { device: { select: { deviceId: true, status: true } } },
         });
 
-        // 24h Average
+        // 24h Averages for ALL metrics
         const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const agg = await prisma.sensorReading.aggregate({
           where: { zoneId: zone.id, createdAt: { gte: yesterday } },
-          _avg: { moisture: true },
+          _avg: { moisture: true, temperature: true, humidity: true },
+          _count: true,
         });
 
-        contextData += `    Latest Moisture: ${latestReading?.moisture ?? 'N/A'}%\n`;
-        contextData += `    24h Avg Moisture: ${agg._avg.moisture ? Math.round(agg._avg.moisture) : 'N/A'}%\n`;
+        if (latestReading) {
+          const readingAge = Math.round((Date.now() - new Date(latestReading.createdAt).getTime()) / 60000);
+          contextData += `    📊 LIVE SENSOR DATA (${readingAge} minutes ago):\n`;
+          contextData += `      Soil Moisture: ${latestReading.moisture ?? 'N/A'}%\n`;
+          contextData += `      Temperature: ${latestReading.temperature ?? 'N/A'}°C\n`;
+          contextData += `      Humidity: ${latestReading.humidity ?? 'N/A'}%\n`;
+          contextData += `      Battery: ${latestReading.battery ?? 'N/A'}%\n`;
+          if (latestReading.device) {
+            contextData += `      Device: ${latestReading.device.deviceId} (${latestReading.device.status})\n`;
+          }
+        } else {
+          contextData += `    ⚠️ No sensor readings yet for this zone.\n`;
+        }
+
+        contextData += `    📈 24h AVERAGES (${agg._count} readings):\n`;
+        contextData += `      Avg Moisture: ${agg._avg.moisture ? Math.round(agg._avg.moisture) : 'N/A'}%\n`;
+        contextData += `      Avg Temperature: ${agg._avg.temperature ? Math.round(agg._avg.temperature * 10) / 10 : 'N/A'}°C\n`;
+        contextData += `      Avg Humidity: ${agg._avg.humidity ? Math.round(agg._avg.humidity) : 'N/A'}%\n`;
 
         // Latest Recommendation
         const latestRec = await prisma.aIRecommendation.findFirst({
@@ -149,7 +167,7 @@ Instructions:
         });
 
         if (latestRec) {
-          contextData += `    Latest AI Rec: ${latestRec.recommendation} (${latestRec.reason})\n`;
+          contextData += `    🤖 Latest AI Rec: ${latestRec.recommendation} (${latestRec.reason})\n`;
         }
         contextData += '\n';
       }
@@ -157,7 +175,7 @@ Instructions:
 
     const systemPrompt = `
 You are "Ramu", an expert agricultural AI assistant for the KisanMitra platform.
-You are helping a farmer manage their farms. Here is their current farm context:
+You have REAL-TIME ACCESS to the farmer's IoT sensor data. Here is their current farm context:
 
 ---
 ${contextData}
@@ -165,10 +183,13 @@ ${contextData}
 
 Instructions:
 1. Answer the farmer's question clearly, concisely, and practically.
-2. Use the context provided above to give specific advice (e.g., mention specific zones if they need irrigation).
-3. Be polite and speak in a helpful, encouraging tone.
-4. If asked about something outside of agriculture or the farm's context, politely decline to answer.
-5. IMPORTANT: You MUST respond entirely in ${language}. ${language === 'Hindi' ? 'Use Devanagari script (हिन्दी में जवाब दें).' : language === 'Marathi' ? 'Use Devanagari script (मराठीत उत्तर द्या).' : 'Respond in English.'}
+2. ALWAYS reference the LIVE SENSOR DATA above when answering questions about moisture, temperature, humidity, or farm conditions. Quote the exact numbers.
+3. If soil moisture is below the threshold, proactively warn about irrigation needs.
+4. If temperature is above 35°C or below 10°C, warn about crop stress.
+5. If humidity is above 80%, warn about fungal disease risk.
+6. Be polite and speak in a helpful, encouraging tone. Use emojis sparingly.
+7. If asked about something outside of agriculture or the farm's context, politely decline.
+8. IMPORTANT: You MUST respond entirely in ${language}. ${language === 'Hindi' ? 'Use Devanagari script (हिन्दी में जवाब दें).' : language === 'Marathi' ? 'Use Devanagari script (मराठीत उत्तर द्या).' : 'Respond in English.'}
     `;
 
     // Build multi-turn conversation contents
