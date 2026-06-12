@@ -47,6 +47,7 @@ export default function Settings({
   const [farmUnit, setFarmUnit] = useState(profile.farmSizeUnit);
   const [farmState, setFarmState] = useState(profile.state);
   const [district, setDistrict] = useState(profile.district);
+  const [pincode, setPincode] = useState(profile.pincode || "");
   
   // Settings configs
   const [cloudSync, setCloudSync] = useState(true);
@@ -67,6 +68,7 @@ export default function Settings({
       farmSizeUnit: farmUnit,
       state: farmState,
       district,
+      pincode,
       language: selectedLanguage,
       temperatureUnit: tempUnit
     };
@@ -150,10 +152,45 @@ export default function Settings({
                 onChange={(e) => setFarmState(e.target.value)}
                 className="w-full h-12 bg-surface-base text-body-sm font-medium border border-border-subtle rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-signal-success/30 focus:border-signal-success transition-colors shadow-sm"
               >
-                <option value="Maharashtra">Maharashtra</option>
-                <option value="Punjab">Punjab</option>
+                <option value="">-- Select State --</option>
+                {/* States */}
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                <option value="Assam">Assam</option>
+                <option value="Bihar">Bihar</option>
+                <option value="Chhattisgarh">Chhattisgarh</option>
+                <option value="Goa">Goa</option>
                 <option value="Gujarat">Gujarat</option>
+                <option value="Haryana">Haryana</option>
+                <option value="Himachal Pradesh">Himachal Pradesh</option>
+                <option value="Jharkhand">Jharkhand</option>
                 <option value="Karnataka">Karnataka</option>
+                <option value="Kerala">Kerala</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Manipur">Manipur</option>
+                <option value="Meghalaya">Meghalaya</option>
+                <option value="Mizoram">Mizoram</option>
+                <option value="Nagaland">Nagaland</option>
+                <option value="Odisha">Odisha</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Rajasthan">Rajasthan</option>
+                <option value="Sikkim">Sikkim</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Telangana">Telangana</option>
+                <option value="Tripura">Tripura</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="Uttarakhand">Uttarakhand</option>
+                <option value="West Bengal">West Bengal</option>
+                {/* Union Territories */}
+                <option value="Andaman and Nicobar Islands">Andaman & Nicobar Islands</option>
+                <option value="Chandigarh">Chandigarh</option>
+                <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra & Nagar Haveli and Daman & Diu</option>
+                <option value="Delhi">Delhi (NCT)</option>
+                <option value="Jammu and Kashmir">Jammu & Kashmir</option>
+                <option value="Ladakh">Ladakh</option>
+                <option value="Lakshadweep">Lakshadweep</option>
+                <option value="Puducherry">Puducherry</option>
               </select>
             </div>
 
@@ -168,6 +205,21 @@ export default function Settings({
                 onChange={(e) => setDistrict(e.target.value)}
                 className="w-full h-12 bg-surface-base text-body-sm font-medium border border-border-subtle rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-signal-success/30 focus:border-signal-success transition-colors shadow-sm"
               />
+            </div>
+
+            {/* Pincode */}
+            <div className="space-y-1.5">
+              <label className="text-micro font-bold text-content-muted uppercase tracking-widest block" htmlFor="pincode-input">📍 Pincode (for Weather)</label>
+              <input
+                id="pincode-input"
+                type="text"
+                maxLength={6}
+                placeholder="e.g. 411001"
+                value={pincode}
+                onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
+                className="w-full h-12 bg-surface-base text-body-sm font-medium border border-border-subtle rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-signal-success/30 focus:border-signal-success transition-colors shadow-sm"
+              />
+              <p className="text-micro text-content-muted">Used to fetch live weather data for your farm location.</p>
             </div>
 
             {/* Profile Crop selection */}

@@ -73,6 +73,76 @@ export default function Dashboard({
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Weather state
+  const [weather, setWeather] = useState<{
+    temperature: number;
+    humidity: number;
+    windSpeed: number;
+    rainProb: number;
+    description: string;
+    location: string;
+  } | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+
+  // Fetch weather from Open-Meteo using pincode geocoding
+  const fetchWeather = useCallback(async () => {
+    const pincode = profile.pincode;
+    if (!pincode || pincode.length < 5) return;
+    setWeatherLoading(true);
+    try {
+      // Step 1: Convert pincode to lat/lng using Nominatim (free geocoding)
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?postalcode=${pincode}&country=India&format=json&limit=1`,
+        { headers: { 'User-Agent': 'KisanMitraAI/1.0' } }
+      );
+      const geoData = await geoRes.json();
+      if (!geoData || geoData.length === 0) {
+        console.warn('Could not geocode pincode:', pincode);
+        setWeatherLoading(false);
+        return;
+      }
+      const { lat, lon, display_name } = geoData[0];
+
+      // Step 2: Fetch weather from Open-Meteo (free, no API key)
+      const weatherRes = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,weather_code&timezone=auto`
+      );
+      const weatherData = await weatherRes.json();
+      const current = weatherData.current || {};
+
+      // Map WMO weather codes to descriptions
+      const wmoDescriptions: Record<number, string> = {
+        0: 'Clear Sky ☀️', 1: 'Mainly Clear 🌤️', 2: 'Partly Cloudy ⛅',
+        3: 'Overcast ☁️', 45: 'Foggy 🌫️', 48: 'Rime Fog 🌫️',
+        51: 'Light Drizzle 🌦️', 53: 'Moderate Drizzle 🌧️', 55: 'Dense Drizzle 🌧️',
+        61: 'Slight Rain 🌧️', 63: 'Moderate Rain 🌧️', 65: 'Heavy Rain 🌧️',
+        71: 'Light Snow ❄️', 73: 'Moderate Snow ❄️', 75: 'Heavy Snow ❄️',
+        80: 'Rain Showers 🌦️', 81: 'Moderate Showers 🌧️', 82: 'Violent Showers ⛈️',
+        95: 'Thunderstorm ⛈️', 96: 'Thunderstorm + Hail ⛈️', 99: 'Severe Thunderstorm ⛈️',
+      };
+
+      const code = current.weather_code ?? 0;
+      const desc = wmoDescriptions[code] || 'Unknown';
+
+      // Extract location name (city/district from Nominatim)
+      const locationParts = display_name.split(',');
+      const locationName = locationParts.slice(0, 2).join(', ');
+
+      setWeather({
+        temperature: Math.round(current.temperature_2m ?? 0),
+        humidity: current.relative_humidity_2m ?? 0,
+        windSpeed: Math.round(current.wind_speed_10m ?? 0),
+        rainProb: current.precipitation_probability ?? 0,
+        description: desc,
+        location: locationName,
+      });
+    } catch (err) {
+      console.warn('Weather fetch failed:', err);
+    } finally {
+      setWeatherLoading(false);
+    }
+  }, [profile.pincode]);
+
   // Fetch live telemetry for all zones
   const fetchTelemetry = useCallback(async () => {
     if (!hasZones) return;
@@ -114,6 +184,7 @@ export default function Dashboard({
   useEffect(() => {
     fetchTelemetry();
     fetchStats();
+    fetchWeather(); // Fetch weather on mount
 
     // Fallback polling every 5 seconds
     const interval = setInterval(() => {
@@ -169,7 +240,7 @@ export default function Dashboard({
       clearInterval(interval);
       if (socket) socket.disconnect();
     };
-  }, [fetchTelemetry, fetchStats]);
+  }, [fetchTelemetry, fetchStats, fetchWeather]);
 
   // Computed from live data
   const farmHealthScore = hasZones
@@ -222,28 +293,43 @@ export default function Dashboard({
         )}
       </div>
 
-      {/* Weather Card */}
+      {/* Weather Card — Live from Pincode */}
       <div className="material-surface p-6 rounded-[2rem] border border-border-subtle relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
           <ThermometerSun size={120} />
         </div>
         <h2 className="text-body-lg font-bold text-content-primary mb-4 flex items-center gap-2">
           <CloudRain size={20} className="text-signal-info" /> Local Weather
+          {weather && <span className="text-caption font-medium text-content-muted ml-2">📍 {weather.location}</span>}
         </h2>
-        <div className="flex items-end gap-6">
-          <div>
-            <p className="text-h1 font-bold text-content-primary">34°C</p>
-            <p className="text-body-sm text-content-secondary">Partly Cloudy</p>
+        {weatherLoading ? (
+          <div className="flex items-center gap-3 py-4">
+            <RefreshCw size={18} className="animate-spin text-content-muted" />
+            <span className="text-body-sm text-content-muted">Fetching weather for pincode {profile.pincode}...</span>
           </div>
-          <div className="space-y-1 mb-1">
-            <div className="flex items-center gap-2 text-body-sm text-content-secondary">
-              <Wind size={14} /> 12 km/h
+        ) : weather ? (
+          <div className="flex items-end gap-6">
+            <div>
+              <p className="text-h1 font-bold text-content-primary">{weather.temperature}°C</p>
+              <p className="text-body-sm text-content-secondary">{weather.description}</p>
             </div>
-            <div className="flex items-center gap-2 text-body-sm text-content-secondary">
-              <CloudRain size={14} /> 20% Rain Prob.
+            <div className="space-y-1 mb-1">
+              <div className="flex items-center gap-2 text-body-sm text-content-secondary">
+                <Wind size={14} /> {weather.windSpeed} km/h
+              </div>
+              <div className="flex items-center gap-2 text-body-sm text-content-secondary">
+                <CloudRain size={14} /> {weather.rainProb}% Rain
+              </div>
+              <div className="flex items-center gap-2 text-body-sm text-content-secondary">
+                <Droplets size={14} /> {weather.humidity}% Humidity
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="py-4">
+            <p className="text-body-sm text-content-muted">No weather data. Set your <strong>Pincode</strong> in Settings to see live weather.</p>
+          </div>
+        )}
       </div>
 
       {/* === EMPTY STATE: No Zones Yet === */}

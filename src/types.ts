@@ -10,6 +10,7 @@ export interface UserProfile {
   role?: string;
   state: string;
   district: string;
+  pincode?: string;
   language?: string;
   cropType?: string; // These might be removed in user object but kept for fallback
   farmSize?: number;
