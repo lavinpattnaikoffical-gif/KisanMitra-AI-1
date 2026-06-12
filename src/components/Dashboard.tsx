@@ -8,7 +8,8 @@ import {
   Map, 
   AlertTriangle,
   Info,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from "lucide-react";
 import { motion } from "motion/react";
 import { UserProfile } from "../types";

@@ -410,11 +410,11 @@ export default function App() {
           <div className="material-glass rounded-3xl p-3 flex flex-col justify-between h-full shadow-sm">
             <div className="space-y-1.5">
               {[
-                { id: "dashboard", label: t.dashboard, icon: Home },
-                { id: "detect", label: t.detect, icon: Camera },
+                { id: "dashboard", label: "Home", icon: Home },
+                { id: "zones", label: "Zones", icon: Layers },
+                { id: "devices", label: "Devices", icon: Radio },
                 { id: "market", label: t.market, icon: Store },
-                { id: "activity", label: t.activity, icon: ClipboardList },
-                { id: "ai", label: t.ai, icon: Bot },
+                { id: "ai", label: "Ramu", icon: Bot },
                 { id: "settings", label: t.settings, icon: SettingsIcon }
               ].map((navItem) => (
                 <motion.button
@@ -478,16 +478,22 @@ export default function App() {
                   onNavigateTab={setCurrentTab}
                   metrics={metrics}
                   alerts={alerts}
-                  onDismissAlert={handleDismissAlert}
-                  onTriggerIrrigation={handleTriggerIrrigation}
-                  onAddPriorityLog={(type, amt, notes) => handleAddLog({
-                    id: `tk-${Date.now()}`,
-                    activityType: type as any,
-                    cropName: profile.cropType,
-                    amount: amt,
-                    notes,
-                    timestamp: "Just now"
-                  })}
+                />
+              )}
+
+              {currentTab === "zones" && (
+                <Zones
+                  profile={profile}
+                  selectedLanguage={selectedLanguage}
+                  onNavigateTab={setCurrentTab}
+                />
+              )}
+
+              {currentTab === "devices" && (
+                <Devices
+                  profile={profile}
+                  selectedLanguage={selectedLanguage}
+                  onNavigateTab={setCurrentTab}
                 />
               )}
 
