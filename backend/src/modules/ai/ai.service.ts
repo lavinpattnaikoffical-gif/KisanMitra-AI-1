@@ -170,18 +170,66 @@ Instructions:
 4. If asked about something outside of agriculture or the farm's context, politely decline to answer.
     `;
 
-    const response = await ai.models.generateContent({
-      model: env.GEMINI_MODEL,
-      contents: [
-        { role: 'user', parts: [{ text: systemPrompt }] },
-        { role: 'user', parts: [{ text: message }] }
-      ],
-      config: {
-        temperature: 0.7,
-      },
-    });
+    // Try Gemini first, fallback to OpenRouter, then offline message
+    try {
+      const response = await ai.models.generateContent({
+        model: env.GEMINI_MODEL,
+        contents: [
+          { role: 'user', parts: [{ text: systemPrompt }] },
+          { role: 'user', parts: [{ text: message }] }
+        ],
+        config: {
+          temperature: 0.7,
+        },
+      });
 
-    return response.text || 'I am sorry, I am unable to respond right now.';
+      const text = response.text;
+      if (text && text.trim().length > 0) {
+        return text;
+      }
+    } catch (geminiError: any) {
+      console.warn('Gemini AI chat error (will try fallback):', geminiError?.message || geminiError);
+    }
+
+    // Fallback: Try OpenRouter if configured
+    if (env.OPENROUTER_API_KEY) {
+      try {
+        const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer': 'https://kisanmitr.ai',
+            'X-Title': 'KisanMitr AI',
+          },
+          body: JSON.stringify({
+            model: env.OPENROUTER_MODEL,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: message },
+            ],
+            temperature: 0.7,
+          }),
+        });
+
+        if (orRes.ok) {
+          const orData: any = await orRes.json();
+          const orText = orData.choices?.[0]?.message?.content;
+          if (orText && orText.trim().length > 0) {
+            return orText;
+          }
+        }
+      } catch (orError: any) {
+        console.warn('OpenRouter fallback also failed:', orError?.message || orError);
+      }
+    }
+
+    // Final fallback: helpful offline message
+    const farmSummary = farms.length > 0
+      ? `Based on your ${farms.length} farm(s), here is my general advice:\n- Monitor soil moisture levels closely and irrigate when below threshold.\n- Check weather forecasts before applying fertilizers or pesticides.\n- Inspect crop leaves regularly for early signs of disease.`
+      : 'Please set up your farm and zones first so I can provide personalized advice.';
+
+    return `Namaste! I'm Ramu, your agricultural assistant. The AI service is temporarily busy, but I can still help!\n\n${farmSummary}\n\nPlease try again in a few moments for detailed AI-powered analysis.`;
   }
 }
 
