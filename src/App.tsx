@@ -20,7 +20,9 @@ import {
   MapPin,
   X,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  Layers,
+  Radio
 } from "lucide-react";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 
@@ -32,7 +34,8 @@ import { api } from "./utils/api";
 import LivingSurface from "./components/LivingSurface";
 import LoginOnboarding from "./components/LoginOnboarding";
 import Dashboard from "./components/Dashboard";
-import Detect from "./components/Detect";
+import Zones from "./components/Zones";
+import Devices from "./components/Devices";
 import Marketplace from "./components/Marketplace";
 import Telemetry from "./components/Telemetry";
 import Advisor from "./components/Advisor";
@@ -62,7 +65,7 @@ const INITIAL_ALERTS: InboxAlert[] = [
 export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("English");
-  const [currentTab, setCurrentTab] = useState<"dashboard" | "detect" | "market" | "activity" | "ai" | "settings">("dashboard");
+  const [currentTab, setCurrentTab] = useState<"dashboard" | "zones" | "devices" | "market" | "ai" | "settings">("dashboard");
   const [darkMode, setDarkMode] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [liveLocation, setLiveLocation] = useState<{district: string; state: string} | null>(null);
@@ -474,7 +477,7 @@ export default function App() {
                   selectedLanguage={selectedLanguage}
                   onNavigateTab={setCurrentTab}
                   metrics={metrics}
-                  alertList={alerts}
+                  alerts={alerts}
                   onDismissAlert={handleDismissAlert}
                   onTriggerIrrigation={handleTriggerIrrigation}
                   onAddPriorityLog={(type, amt, notes) => handleAddLog({
@@ -488,17 +491,6 @@ export default function App() {
                 />
               )}
 
-              {currentTab === "detect" && (
-                <Detect 
-                  profile={profile} 
-                  selectedLanguage={selectedLanguage}
-                  onNavigateTab={setCurrentTab}
-                  scans={scans}
-                  onAddScan={handleAddScan}
-                  onAskRamu={handleAskRamuContext}
-                />
-              )}
-
               {currentTab === "market" && (
                 <Marketplace 
                   profile={profile} 
@@ -507,18 +499,6 @@ export default function App() {
                   products={products}
                   userListings={listings}
                   onAddListing={handleAddListing}
-                />
-              )}
-
-              {currentTab === "activity" && (
-                <Telemetry 
-                  profile={profile} 
-                  selectedLanguage={selectedLanguage}
-                  onNavigateTab={setCurrentTab}
-                  logs={logs}
-                  onAddLog={handleAddLog}
-                  metrics={metrics}
-                  onTriggerIrrigation={handleTriggerIrrigation}
                 />
               )}
 
@@ -557,9 +537,9 @@ export default function App() {
       <div className="lg:hidden fixed bottom-0 inset-x-0 material-glass border-t-0 shadow-[0_-8px_24px_rgba(0,0,0,0.04)] h-20 flex items-center justify-around z-40 select-none pb-safe px-2">
         {[
           { id: "dashboard", label: "Home", icon: Home },
-          { id: "detect", label: "Detect", icon: Camera },
+          { id: "zones", label: "Zones", icon: Layers },
+          { id: "devices", label: "Devices", icon: Radio },
           { id: "market", label: "Market", icon: Store },
-          { id: "activity", label: "Logs", icon: ClipboardList },
           { id: "ai", label: "AI", icon: Bot }
         ].map((dockItem) => (
           <motion.button

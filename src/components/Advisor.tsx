@@ -467,24 +467,38 @@ export default function Advisor({
             )}
           </AnimatePresence>
 
-          {/* Quick Context Chips */}
-          <div className="px-6 pb-3 pt-2 flex gap-2 overflow-x-auto hide-scrollbar z-10 relative bg-surface-base shrink-0">
-            {(contextEntryTab === "detect" 
-              ? ["Discuss Latest Scan", "Explain Fungicide Application"]
-              : contextEntryTab === "dashboard"
-              ? ["Explain Farm Health Score", "Today's Weather Priorities"]
-              : contextEntryTab === "activity"
-              ? ["Analyze Soil Moisture Trends", "Review Irrigation Schedule"]
-              : ["What is my farm health?", "Check current mandi prices"]
-            ).map((chip, idx) => (
-              <button
-                key={idx}
-                onClick={() => setInputMsg(chip)}
-                className="whitespace-nowrap px-4 py-2 bg-surface-elevated border border-border-subtle rounded-full text-caption font-bold text-content-secondary hover:text-content-primary hover:border-border-strong transition-colors cursor-pointer"
+          <div className="px-6 pb-3 pt-2 flex flex-col gap-3 z-10 relative bg-surface-base shrink-0">
+            {/* Context Mode Selector */}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-caption font-bold text-content-muted uppercase tracking-wider">AI Context Mode:</span>
+              <select
+                className="bg-surface-elevated text-body-sm font-bold text-content-primary border border-border-subtle rounded-xl px-3 py-1.5 focus:outline-none focus:border-signal-info cursor-pointer"
+                onChange={(e) => {
+                  // This is a visual UI element, prompt context will be injected during the handleSend logic later
+                  console.log("Context changed to", e.target.value);
+                }}
               >
-                {chip}
-              </button>
-            ))}
+                <option value="general">General Agriculture</option>
+                <option value="all_zones">All Zones Overview</option>
+                <option value="zone_a">Zone A (Tomato)</option>
+                <option value="zone_b">Zone B (Cotton)</option>
+                <option value="zone_c">Zone C (Wheat)</option>
+                <option value="zone_d">Zone D (Corn)</option>
+              </select>
+            </div>
+
+            {/* Quick Prompts */}
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+              {["How to grow tomatoes?", "Which zones need water today?", "Should I irrigate Zone A?"].map((chip, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setInputMsg(chip)}
+                  className="whitespace-nowrap px-4 py-2 bg-surface-elevated border border-border-subtle rounded-full text-caption font-bold text-content-secondary hover:text-content-primary hover:border-border-strong transition-colors cursor-pointer"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="bg-surface-elevated border-t border-border-subtle p-3 px-6 flex items-center gap-5 z-10 relative select-none shrink-0">
