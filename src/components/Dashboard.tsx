@@ -70,8 +70,22 @@ export default function Dashboard({
   zones,
 }: DashboardProps) {
   const hasZones = zones.length > 0;
-  const [liveTelemetry, setLiveTelemetry] = useState<Record<string, LiveTelemetry>>({});
-  const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
+  const [liveTelemetry, setLiveTelemetry] = useState<Record<string, LiveTelemetry>>(() => {
+    try {
+      const saved = localStorage.getItem("kisan_dashboard_telemetry");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [dashStats, setDashStats] = useState<DashboardStats | null>(() => {
+    try {
+      const saved = localStorage.getItem("kisan_dashboard_stats");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -83,7 +97,14 @@ export default function Dashboard({
     rainProb: number;
     description: string;
     location: string;
-  } | null>(null);
+  } | null>(() => {
+    try {
+      const saved = localStorage.getItem("kisan_dashboard_weather");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [weatherLoading, setWeatherLoading] = useState(false);
 
   // Fetch weather from Open-Meteo using pincode geocoding
@@ -130,14 +151,18 @@ export default function Dashboard({
       const locationParts = display_name.split(',');
       const locationName = locationParts.slice(0, 2).join(', ');
 
-      setWeather({
+      const formattedWeather = {
         temperature: Math.round(current.temperature_2m ?? 0),
         humidity: current.relative_humidity_2m ?? 0,
         windSpeed: Math.round(current.wind_speed_10m ?? 0),
         rainProb: current.precipitation_probability ?? 0,
         description: desc,
         location: locationName,
-      });
+      };
+      setWeather(formattedWeather);
+      try {
+        localStorage.setItem("kisan_dashboard_weather", JSON.stringify(formattedWeather));
+      } catch {}
     } catch (err) {
       console.warn('Weather fetch failed:', err);
     } finally {
@@ -164,6 +189,9 @@ export default function Dashboard({
         }
       });
       setLiveTelemetry(telemetryMap);
+      try {
+        localStorage.setItem("kisan_dashboard_telemetry", JSON.stringify(telemetryMap));
+      } catch {}
       setLastRefreshed(new Date());
     } catch (err) {
       console.warn("Failed to fetch telemetry:", err);
@@ -176,7 +204,12 @@ export default function Dashboard({
   const fetchStats = useCallback(async () => {
     try {
       const res = await api.getDashboardStats();
-      if (res.success) setDashStats(res.data);
+      if (res.success) {
+        setDashStats(res.data);
+        try {
+          localStorage.setItem("kisan_dashboard_stats", JSON.stringify(res.data));
+        } catch {}
+      }
     } catch (err) {
       console.warn("Failed to fetch dashboard stats:", err);
     }
@@ -213,10 +246,16 @@ export default function Dashboard({
 
       socket.on("telemetry:update", (data: any) => {
         if (data?.zoneId && data?.reading) {
-          setLiveTelemetry((prev) => ({
-            ...prev,
-            [data.zoneId]: data.reading,
-          }));
+          setLiveTelemetry((prev) => {
+            const updated = {
+              ...prev,
+              [data.zoneId]: data.reading,
+            };
+            try {
+              localStorage.setItem("kisan_dashboard_telemetry", JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
           setLastRefreshed(new Date());
         }
       });
@@ -433,9 +472,18 @@ export default function Dashboard({
               <h2 className="text-h4 font-bold text-content-primary flex items-center gap-2">
                 <Map size={24} className="text-content-secondary" /> Zone Telemetry
               </h2>
-              <div className="flex items-center gap-2 text-micro text-content-muted">
-                <span className="w-1.5 h-1.5 rounded-full bg-signal-success animate-pulse" />
-                Live — updates every 10s
+              <div className="flex items-center gap-2 text-micro text-content-muted font-bold tracking-wider">
+                {isRefreshing ? (
+                  <span className="flex items-center gap-1">
+                    <RefreshCw size={10} className="animate-spin text-signal-success" />
+                    Syncing...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-signal-success animate-pulse" />
+                    Live — updates every 10s
+                  </span>
+                )}
               </div>
             </div>
 
