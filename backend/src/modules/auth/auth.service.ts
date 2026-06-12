@@ -72,14 +72,15 @@ export class AuthService {
       throw new Error('Invalid OTP');
     }
 
-    // Mark OTP as used
-    await prisma.otpRecord.update({ where: { id: record.id }, data: { used: true } });
-
     const existingUser = await prisma.user.findUnique({ where: { phone } });
 
     if (!existingUser) {
+      // Do NOT mark OTP as used — register-otp will consume it
       return { token: '', user: {}, isNewUser: true };
     }
+
+    // Mark OTP as used only for existing users (login flow)
+    await prisma.otpRecord.update({ where: { id: record.id }, data: { used: true } });
 
     const token = signToken({ userId: existingUser.id, phone, role: existingUser.role });
     return { token, user: existingUser, isNewUser: false };
