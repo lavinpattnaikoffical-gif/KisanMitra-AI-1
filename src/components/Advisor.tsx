@@ -26,6 +26,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile, ChatMessage } from "../types";
 import { TRANSLATIONS, LanguageCode } from "../translations";
+import { api } from "../utils/api";
 
 interface AdvisorProps {
   profile: UserProfile;
@@ -112,36 +113,24 @@ export default function Advisor({
     setLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: messageText,
-          history: chatHistory,
-          language: selectedLanguage
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Chat server busy. Connecting local chatbot.");
-      }
-
-      const resData = await response.json();
+      const resData = await api.chatAI(messageText);
       
+      const botText = resData.data?.answer || resData.text || "I was unable to formulate a response.";
+
       const botMsg: ChatMessage = {
         id: `bot-chat-${Date.now()}`,
         sender: "bot",
-        text: resData.text,
+        text: botText,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       };
 
       // Add smart direct context action chips depending on AI response keywords
-      if (resData.text.toLowerCase().includes("irrigation") || resData.text.toLowerCase().includes("पानी") || resData.text.toLowerCase().includes("ओल")) {
+      if (botText.toLowerCase().includes("irrigation") || botText.toLowerCase().includes("पानी") || botText.toLowerCase().includes("ओल")) {
         botMsg.actions = [
           { label: "Trigger zone B irrigation", action: "triggerIrrigation" },
           { label: "View telemetry charts", action: "navActivity" }
         ];
-      } else if (resData.text.toLowerCase().includes("blight") || resData.text.toLowerCase().includes("mildew") || resData.text.toLowerCase().includes("रोग") || resData.text.toLowerCase().includes("पत्ती")) {
+      } else if (botText.toLowerCase().includes("blight") || botText.toLowerCase().includes("mildew") || botText.toLowerCase().includes("रोग") || botText.toLowerCase().includes("पत्ती")) {
         botMsg.actions = [
           { label: "Buy Mancozeb fungicide", action: "buyFungicide" },
           { label: "Run leaf scanner", action: "navDetect" }
@@ -150,7 +139,7 @@ export default function Advisor({
 
       onAddChatMessage(botMsg);
       // Auto speech synthesis of Gemini AI response for illiterate accessibility (voice-first!)
-      speakText(resData.text);
+      speakText(botText);
 
     } catch (err) {
       console.warn("Chat error, connecting local template responder:", err);
