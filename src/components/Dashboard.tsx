@@ -19,7 +19,9 @@ import {
   RefreshCw,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  Bot,
+  ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile } from "../types";
@@ -336,15 +338,32 @@ export default function Dashboard({
       {!hasZones && (
         <div className="material-surface p-10 rounded-[2rem] border-2 border-dashed border-border-strong flex flex-col items-center justify-center text-center space-y-5">
           <div className="w-20 h-20 rounded-full bg-signal-success/10 flex items-center justify-center">
-            <Layers size={36} className="text-signal-success" />
+            <Bot size={36} className="text-signal-success" />
           </div>
           <div>
-            <h2 className="text-h3 font-bold text-content-primary">Set Up Your Farm</h2>
-            <p className="text-body-md text-content-secondary mt-2 max-w-md">
-              Start by creating your first zone. A zone represents a section of your farm — like "North Field" or "Greenhouse 1".
+            <h2 className="text-h3 font-bold text-content-primary">🤖 Ramu here! Let's set up your farm</h2>
+            <p className="text-body-md text-content-secondary mt-2 max-w-lg">
+              I'll guide you through 3 simple steps to start monitoring your farm with real-time IoT sensors and AI insights.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
+
+          {/* Step Tour */}
+          <div className="w-full max-w-md space-y-3 text-left">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-signal-success/10 border border-signal-success/20">
+              <span className="w-7 h-7 rounded-full bg-signal-success text-surface-base text-caption font-bold flex items-center justify-center shrink-0">1</span>
+              <span className="text-body-sm font-medium text-content-primary">Create a Farm Zone (e.g. "Rice Field", "Greenhouse")</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-elevated border border-border-subtle opacity-60">
+              <span className="w-7 h-7 rounded-full bg-content-muted text-surface-base text-caption font-bold flex items-center justify-center shrink-0">2</span>
+              <span className="text-body-sm font-medium text-content-secondary">Connect an IoT sensor device</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-elevated border border-border-subtle opacity-40">
+              <span className="w-7 h-7 rounded-full bg-content-muted text-surface-base text-caption font-bold flex items-center justify-center shrink-0">3</span>
+              <span className="text-body-sm font-medium text-content-secondary">I start analyzing & giving advice!</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -353,16 +372,7 @@ export default function Dashboard({
             >
               <Plus size={20} /> Create First Zone
             </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => onNavigateTab("devices")}
-              className="flex items-center gap-2 bg-surface-elevated text-content-primary px-8 py-4 rounded-2xl font-bold text-body-md border border-border-subtle hover:border-border-strong transition-colors cursor-pointer"
-            >
-              <Radio size={20} /> Add a Device
-            </motion.button>
           </div>
-          <p className="text-micro text-content-muted">You can also ask <strong>Ramu AI</strong> for help getting started.</p>
         </div>
       )}
 
@@ -523,17 +533,71 @@ export default function Dashboard({
             </div>
           </div>
 
-          {/* AI Recommendations */}
+          {/* 🤖 Ramu: Contextual AI Guide */}
           <div className="space-y-4">
             <h2 className="text-h4 font-bold text-content-primary flex items-center gap-2">
-              <Sparkles size={24} className="text-signal-info" /> AI Recommendations
+              <Bot size={24} className="text-signal-success" /> Ramu Intelligence
             </h2>
-            <div className="p-5 rounded-2xl bg-signal-info/10 border border-signal-info/20 flex items-start gap-3">
-              <Info size={18} className="text-signal-info shrink-0 mt-0.5" />
-              <p className="text-body-sm font-medium text-content-primary">
-                Ramu is analyzing your {zones.length} zone{zones.length > 1 ? "s" : ""}. Recommendations will appear here based on real-time telemetry.
-              </p>
-            </div>
+
+            {/* Step 1: No pincode set */}
+            {!profile.pincode && (
+              <div className="p-5 rounded-2xl bg-signal-warning/10 border border-signal-warning/20 flex items-start gap-3">
+                <Bot size={18} className="text-signal-warning shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-body-sm font-medium text-content-primary">
+                    🤖 <strong>Set your Pincode</strong> in Settings to see live weather data for your farm!
+                  </p>
+                  <button
+                    onClick={() => onNavigateTab("settings")}
+                    className="mt-2 text-body-sm font-bold text-signal-warning hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    Go to Settings <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: No devices connected */}
+            {!zones.some(z => {
+              const t = liveTelemetry[z.id];
+              return t && t.moisture !== null;
+            }) && (
+              <div className="p-5 rounded-2xl bg-signal-info/10 border border-signal-info/20 flex items-start gap-3">
+                <Bot size={18} className="text-signal-info shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-body-sm font-medium text-content-primary">
+                    🤖 No sensor data received yet. <strong>Connect an IoT device</strong> to start receiving real-time soil and climate readings.
+                  </p>
+                  <button
+                    onClick={() => onNavigateTab("devices")}
+                    className="mt-2 text-body-sm font-bold text-signal-info hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    Add a Device <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Devices connected, show real recommendations */}
+            {zones.some(z => {
+              const t = liveTelemetry[z.id];
+              return t && t.moisture !== null;
+            }) && (
+              <div className="p-5 rounded-2xl bg-signal-success/10 border border-signal-success/20 flex items-start gap-3">
+                <Sparkles size={18} className="text-signal-success shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-body-sm font-medium text-content-primary">
+                    🤖 <strong>Ramu is monitoring your farm!</strong> I'm analyzing soil moisture, temperature, and humidity across {zones.length} zone{zones.length > 1 ? "s" : ""}.
+                  </p>
+                  <button
+                    onClick={() => onNavigateTab("ai")}
+                    className="mt-2 text-body-sm font-bold text-signal-success hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    Ask me anything <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

@@ -12,8 +12,13 @@ import {
   Plus,
   X,
   Sprout,
-  Loader2
+  Loader2,
+  Bot,
+  Radio,
+  ArrowRight,
+  CheckCircle2
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { UserProfile } from "../types";
 import { ZoneData } from "./Dashboard";
 import ZoneDetails from "./ZoneDetails";
@@ -34,6 +39,7 @@ export default function Zones({ profile, zones, onAddZone }: ZonesProps) {
   const [showAddZone, setShowAddZone] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [justCreatedZone, setJustCreatedZone] = useState<string | null>(null);
 
   // New zone form state
   const [newName, setNewName] = useState("");
@@ -94,6 +100,7 @@ export default function Zones({ profile, zones, onAddZone }: ZonesProps) {
         setNewCrop("Tomato");
         setNewArea("");
         setShowAddZone(false);
+        setJustCreatedZone(zoneRes.data.name); // Show success + next step
       } else {
         setCreateError(zoneRes.message || "Failed to create zone.");
       }
@@ -149,6 +156,66 @@ export default function Zones({ profile, zones, onAddZone }: ZonesProps) {
           <Plus size={20} /> Add Zone
         </button>
       </div>
+
+      {/* 🤖 Ramu: Zone Created Success + Next Step */}
+      <AnimatePresence>
+        {justCreatedZone && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-signal-success/10 border border-signal-success/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-signal-success/20 flex items-center justify-center shrink-0">
+                <Bot size={20} className="text-signal-success" />
+              </div>
+              <div>
+                <p className="text-body-md font-bold text-content-primary">
+                  ✅ Zone "{justCreatedZone}" created successfully!
+                </p>
+                <p className="text-body-sm text-content-secondary mt-1">
+                  🤖 <strong>Ramu says:</strong> Great! Now connect an IoT sensor device to this zone so I can start monitoring soil moisture, temperature, and humidity for you.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => { setJustCreatedZone(null); onNavigateTab("devices"); }}
+                className="flex items-center gap-2 bg-content-primary text-surface-base px-5 py-2.5 rounded-xl font-bold text-body-sm hover:opacity-90 transition-opacity cursor-pointer shadow-md"
+              >
+                <Radio size={16} /> Add Device <ArrowRight size={14} />
+              </button>
+              <button
+                onClick={() => setJustCreatedZone(null)}
+                className="px-3 py-2.5 rounded-xl text-body-sm font-bold text-content-muted hover:text-content-primary transition-colors cursor-pointer"
+              >
+                Later
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🤖 Ramu: Contextual Setup Guide */}
+      {!justCreatedZone && zones.length > 0 && !zones.some(z => z.connectivity) && (
+        <div className="bg-signal-info/10 border border-signal-info/20 rounded-2xl p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-signal-info/20 flex items-center justify-center shrink-0">
+            <Bot size={18} className="text-signal-info" />
+          </div>
+          <div className="flex-1">
+            <p className="text-body-sm font-medium text-content-primary">
+              🤖 <strong>Ramu:</strong> You have {zones.length} zone{zones.length > 1 ? "s" : ""} but no devices connected yet.
+              <button
+                onClick={() => onNavigateTab("devices")}
+                className="ml-1 text-signal-info font-bold hover:underline cursor-pointer"
+              >
+                Connect a sensor →
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* === EMPTY STATE === */}
       {zones.length === 0 && (
