@@ -21,7 +21,8 @@ import {
   History,
   Camera,
   Image as ImageIcon,
-  FileText
+  FileText,
+  Languages
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile, ChatMessage } from "../types";
@@ -52,6 +53,7 @@ export default function Advisor({
   const [inputMsg, setInputMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [chatLanguage, setChatLanguage] = useState<"English" | "Hindi" | "Marathi">("English");
   
   // Audio Speech Recognition states
   const [recognizing, setRecognizing] = useState(false);
@@ -113,7 +115,7 @@ export default function Advisor({
     setLoading(true);
 
     try {
-      const resData = await api.chatAI(messageText);
+      const resData = await api.chatAI(messageText, chatLanguage);
       
       const botText = resData.data?.answer || resData.text || "I was unable to formulate a response.";
 
@@ -273,6 +275,21 @@ export default function Advisor({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Response Language Selector */}
+          <div className="flex items-center gap-1.5 bg-surface-elevated border border-border-subtle rounded-xl px-3 py-2">
+            <Languages size={14} className="text-content-muted" />
+            <select
+              id="chat-language-select"
+              value={chatLanguage}
+              onChange={(e) => setChatLanguage(e.target.value as any)}
+              className="bg-transparent text-body-sm font-bold text-content-primary focus:outline-none cursor-pointer"
+            >
+              <option value="English">EN</option>
+              <option value="Hindi">हिंदी</option>
+              <option value="Marathi">मराठी</option>
+            </select>
+          </div>
+
           {speakingText && (
             <button
               id="advisor-mute-btn"

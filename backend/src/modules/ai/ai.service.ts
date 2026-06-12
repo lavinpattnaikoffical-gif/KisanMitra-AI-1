@@ -102,7 +102,7 @@ Instructions:
    * "Ramu AI" - Context-aware chatbot.
    * Compiles user's farm data and limits telemetry to latest + 24h avg to save tokens.
    */
-  async chat(userId: string, message: string): Promise<string> {
+  async chat(userId: string, message: string, language: string = 'English'): Promise<string> {
     const farms = await prisma.farm.findMany({
       where: { userId },
       include: {
@@ -168,6 +168,7 @@ Instructions:
 2. Use the context provided above to give specific advice (e.g., mention specific zones if they need irrigation).
 3. Be polite and speak in a helpful, encouraging tone.
 4. If asked about something outside of agriculture or the farm's context, politely decline to answer.
+5. IMPORTANT: You MUST respond entirely in ${language}. ${language === 'Hindi' ? 'Use Devanagari script (हिन्दी में जवाब दें).' : language === 'Marathi' ? 'Use Devanagari script (मराठीत उत्तर द्या).' : 'Respond in English.'}
     `;
 
     // Try Gemini first, fallback to OpenRouter, then offline message
