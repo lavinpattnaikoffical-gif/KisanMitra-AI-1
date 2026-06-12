@@ -4,19 +4,84 @@
  */
 
 export interface UserProfile {
-  _id?: string;
+  id: string; // Backend uses standard uuid/cuid for id instead of _id
   name: string;
   phone: string;
   role?: string;
   state: string;
   district: string;
-  language: string;
-  cropType: string;
-  farmSize: number;
-  farmSizeUnit: "Acres" | "Bigha" | "Hectares";
-  temperatureUnit: "C" | "F";
+  language?: string;
+  cropType?: string; // These might be removed in user object but kept for fallback
+  farmSize?: number;
+  farmSizeUnit?: "Acres" | "Bigha" | "Hectares";
+  temperatureUnit?: "C" | "F";
 }
 
+// ── Backend Domain Types ───────────────────────────────────────
+export interface Farm {
+  id: string;
+  userId: string;
+  name: string;
+  state: string;
+  district: string;
+  location: string;
+  totalArea: number;
+  areaUnit: "ACRES" | "HECTARES" | "SQ_METERS";
+  lat?: number;
+  lng?: number;
+  zones?: Zone[];
+}
+
+export interface Zone {
+  id: string;
+  farmId: string;
+  name: string;
+  cropType: string;
+  areaSize: number;
+  areaUnit: "ACRES" | "HECTARES" | "SQ_METERS";
+  irrigationType: "DRIP" | "SPRINKLER" | "FLOOD" | "MANUAL";
+  moistureThreshold: number;
+  isAutoIrrigationEnabled: boolean;
+  devices?: Device[];
+  _count?: {
+    sensorReadings: number;
+    irrigationEvents: number;
+  };
+}
+
+export interface Device {
+  id: string;
+  zoneId: string;
+  deviceId: string;
+  name: string;
+  role: "SENDER" | "RECEIVER";
+  type: "SOIL" | "WEATHER" | "NPK" | "PH" | "GPS" | "RELAY" | "PUMP" | "VALVE";
+  status: "ONLINE" | "OFFLINE" | "ERROR";
+  lastSeen?: string;
+}
+
+export interface SensorReading {
+  id: string;
+  deviceId: string;
+  zoneId: string;
+  moisture?: number;
+  temperature?: number;
+  humidity?: number;
+  battery?: number;
+  createdAt: string;
+}
+
+export interface AIRecommendation {
+  id: string;
+  zoneId: string;
+  recommendation: string;
+  reason: string;
+  confidence: number;
+  category: "IRRIGATION" | "FERTILIZER" | "PEST" | "GENERAL";
+  createdAt: string;
+}
+
+// ── UI Types ───────────────────────────────────────────────────
 export interface MetricItem {
   id: string;
   label: string;
@@ -105,3 +170,4 @@ export interface ChatMessage {
   timestamp: string;
   actions?: { label: string; action: string }[];
 }
+

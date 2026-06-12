@@ -1,0 +1,324 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  FARMER
+  ADMIN
+}
+
+enum FarmSizeUnit {
+  ACRES
+  BIGHA
+  HECTARES
+}
+
+enum TemperatureUnit {
+  C
+  F
+}
+
+enum DeviceRole {
+  SENDER
+  RECEIVER
+}
+
+enum DeviceType {
+  SOIL
+  WEATHER
+  NPK
+  PH
+  GPS
+  RELAY
+  PUMP
+  VALVE
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  PROVISIONED
+  ERROR
+}
+
+enum IrrigationTrigger {
+  MANUAL
+  AUTO_RULE
+  AI_SUGGESTION
+}
+
+enum IrrigationStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum CommandStatus {
+  PENDING
+  EXECUTED
+  FAILED
+}
+
+enum AICategory {
+  IRRIGATION
+  FERTILIZER
+  CROP_HEALTH
+  WEATHER
+  PEST
+}
+
+enum ActivityType {
+  IRRIGATION
+  FERTILIZING
+  SPRAYING
+  HARVESTING
+  SOWING
+  PRUNING
+  OTHER
+}
+
+enum IrrigationType {
+  DRIP
+  SPRINKLER
+  FLOOD
+  MANUAL
+}
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
+
+model User {
+  id              String          @id @default(cuid())
+  phone           String          @unique
+  name            String
+  role            UserRole        @default(FARMER)
+  state           String          @default("")
+  district        String          @default("")
+  language        String          @default("English")
+  cropType        String          @default("")
+  farmSize        Float           @default(0)
+  farmSizeUnit    FarmSizeUnit    @default(ACRES)
+  temperatureUnit TemperatureUnit @default(C)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  farms              Farm[]
+  activityLogs       FarmActivityLog[]
+  marketListings     MarketListing[]
+  aiRecommendations  AIRecommendation[]
+
+  @@map("users")
+}
+
+model Farm {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  location  String   @default("")
+  totalArea Float    @default(0)
+  areaUnit  FarmSizeUnit @default(ACRES)
+  state     String   @default("")
+  district  String   @default("")
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zones        Zone[]
+  activityLogs FarmActivityLog[]
+
+  @@index([userId])
+  @@map("farms")
+}
+
+model Zone {
+  id                     String         @id @default(cuid())
+  farmId                 String
+  name                   String
+  cropType               String         @default("")
+  areaSize               Float          @default(0)
+  areaUnit               FarmSizeUnit   @default(ACRES)
+  irrigationType         IrrigationType @default(DRIP)
+  moistureThreshold      Float          @default(40.0) // % — trigger AUTO_RULE below this
+  isAutoIrrigationEnabled Boolean       @default(false)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  farm              Farm               @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  devices           Device[]
+  sensorReadings    SensorReading[]
+  irrigationEvents  IrrigationEvent[]
+  aiRecommendations AIRecommendation[]
+
+  @@index([farmId])
+  @@map("zones")
+}
+
+model Device {
+  id               String       @id @default(cuid())
+  zoneId           String
+  deviceId         String       @unique // Human-readable ID e.g. KM-A1B2C3
+  deviceSecretHash String       // bcrypt hash of plain secret shown once at provisioning
+  role             DeviceRole
+  type             DeviceType
+  status           DeviceStatus @default(PROVISIONED)
+  firmware         String?
+  lastSeen         DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  zone           Zone            @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  sensorReadings SensorReading[]
+  commands       DeviceCommandRecord[]
+
+  @@index([zoneId])
+  @@index([deviceId])
+  @@map("devices")
+}
+
+model SensorReading {
+  id          String   @id @default(cuid())
+  deviceId    String
+  zoneId      String
+  moisture    Float?   // %
+  temperature Float?   // °C
+  humidity    Float?   // %
+  battery     Float?   // % remaining
+  createdAt   DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  zone   Zone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@index([zoneId, createdAt(sort: Desc)])
+  @@index([deviceId, createdAt(sort: Desc)])
+  @@map("sensor_readings")
+}
+
+model IrrigationEvent {
+  id                 String            @id @default(cuid())
+  zoneId             String
+  triggeredBy        IrrigationTrigger
+  durationMinutes    Int               @default(0)
+  waterVolumeLiters  Float?
+  status             IrrigationStatus  @default(PENDING)
+  notes              String?
+  timestamp          DateTime          @default(now())
+  completedAt        DateTime?
+
+  zone Zone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@index([zoneId, timestamp(sort: Desc)])
+  @@map("irrigation_events")
+}
+
+model DeviceCommandRecord {
+  id          String        @id @default(cuid())
+  deviceId    String
+  command     String        // e.g. "START_PUMP", "STOP_VALVE", "REBOOT"
+  payload     Json?         // e.g. { "duration": 300 }
+  status      CommandStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  executedAt  DateTime?
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, status])
+  @@index([deviceId, createdAt(sort: Desc)])
+  @@map("device_commands")
+}
+
+model AIRecommendation {
+  id             String     @id @default(cuid())
+  zoneId         String
+  userId         String?
+  recommendation String
+  reason         String
+  confidence     Float      @default(0) // 0-1
+  category       AICategory
+  accepted       Boolean?   // null = pending, true/false = farmer response
+  createdAt      DateTime   @default(now())
+
+  zone Zone  @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([zoneId, createdAt(sort: Desc)])
+  @@map("ai_recommendations")
+}
+
+model FarmActivityLog {
+  id           String       @id @default(cuid())
+  userId       String
+  farmId       String
+  activityType ActivityType
+  cropName     String       @default("")
+  amount       String       @default("")
+  notes        String       @default("")
+  timestamp    DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@index([farmId, timestamp(sort: Desc)])
+  @@index([userId, timestamp(sort: Desc)])
+  @@map("farm_activity_logs")
+}
+
+model MarketListing {
+  id          String   @id @default(cuid())
+  userId      String
+  crop        String
+  category    String
+  price       Float
+  location    String
+  description String   @default("")
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([category])
+  @@map("market_listings")
+}
+
+model OtpRecord {
+  id        String   @id @default(cuid())
+  phone     String
+  otpHash   String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone, used])
+  @@map("otp_records")
+}
+
+model WeatherCache {
+  id        String   @id @default(cuid())
+  farmId    String
+  payload   Json
+  fetchedAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([farmId])
+  @@index([expiresAt])
+  @@map("weather_cache")
+}

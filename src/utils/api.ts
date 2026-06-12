@@ -46,18 +46,83 @@ export const api = {
     return res.json();
   },
 
-  // Marketplace
-  getProducts: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/products/`, {
+  // Farms
+  getFarms: async () => {
+    const res = await fetch(`${BACKEND_URL}/api/farms`, { headers: getHeaders() });
+    return res.json();
+  },
+
+  createFarm: async (farmData: any) => {
+    const res = await fetch(`${BACKEND_URL}/api/farms`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(farmData),
+    });
+    return res.json();
+  },
+
+  // Zones
+  getZones: async (farmId: string) => {
+    const res = await fetch(`${BACKEND_URL}/api/farms/${farmId}/zones`, { headers: getHeaders() });
+    return res.json();
+  },
+
+  createZone: async (farmId: string, zoneData: any) => {
+    const res = await fetch(`${BACKEND_URL}/api/farms/${farmId}/zones`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(zoneData),
+    });
+    return res.json();
+  },
+
+  getZoneOverview: async (zoneId: string) => {
+    const res = await fetch(`${BACKEND_URL}/api/zones/${zoneId}/overview`, { headers: getHeaders() });
+    return res.json();
+  },
+
+  // Devices
+  createDevice: async (deviceData: any) => {
+    const res = await fetch(`${BACKEND_URL}/api/devices`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(deviceData),
+    });
+    return res.json();
+  },
+
+  // Dashboard & Telemetry
+  getDashboard: async () => {
+    const res = await fetch(`${BACKEND_URL}/api/dashboard`, { headers: getHeaders() });
+    return res.json();
+  },
+
+  // Intelligence & AI
+  evaluateZone: async (zoneId: string) => {
+    const res = await fetch(`${BACKEND_URL}/api/intelligence/evaluate-zone/${zoneId}`, {
+      method: "POST",
       headers: getHeaders(),
     });
     return res.json();
   },
 
-  getMyListings: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/products/seller/mine`, {
+  chatAI: async (message: string) => {
+    const res = await fetch(`${BACKEND_URL}/api/ai/chat`, {
+      method: "POST",
       headers: getHeaders(),
+      body: JSON.stringify({ message }),
     });
+    return res.json();
+  },
+
+  // Marketplace (Legacy/Mock)
+  getProducts: async () => {
+    const res = await fetch(`${BACKEND_URL}/api/products/`, { headers: getHeaders() });
+    return res.json();
+  },
+
+  getMyListings: async () => {
+    const res = await fetch(`${BACKEND_URL}/api/products/seller/mine`, { headers: getHeaders() });
     return res.json();
   },
 
@@ -70,18 +135,9 @@ export const api = {
     return res.json();
   },
 
-  // Telemetry & IoT
-  getIotDashboard: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/iot/dashboard`, {
-      headers: getHeaders(),
-    });
-    return res.json();
-  },
-
+  // Activity Logs (Legacy/Mock)
   getFarmActivityLogs: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/updates/my`, {
-      headers: getHeaders(),
-    });
+    const res = await fetch(`${BACKEND_URL}/api/updates/my`, { headers: getHeaders() });
     return res.json();
   },
 
@@ -94,7 +150,7 @@ export const api = {
     return res.json();
   },
 
-  // Disease Scans
+  // Disease Scans (Legacy/Mock)
   saveDiseaseScan: async (reportData: any) => {
     const res = await fetch(`${BACKEND_URL}/api/disease/report`, {
       method: "POST",
