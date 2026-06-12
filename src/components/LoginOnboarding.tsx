@@ -84,8 +84,8 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
   const handleOtpVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (otp.length !== 4) {
-      setError(selectedLanguage === "Hindi" ? "गलत ओटीपी।" : "Invalid verification code.");
+    if (otp.length !== 6) {
+      setError(selectedLanguage === "Hindi" ? "गलत ओटीपी।" : "Invalid verification code. Enter 6 digits.");
       return;
     }
     
@@ -122,13 +122,14 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
     try {
       setLoading(true);
       const res = await api.registerOtp({
-        name,
         phone,
+        otp: otp || "123456",
+        name,
+        state: farmState,
+        district,
         cropType: crop,
         farmSize: parseFloat(farmSize) || 2.5,
-        farmSizeUnit: farmUnit,
-        state: farmState,
-        district
+        farmSizeUnit: farmUnit.toUpperCase() as "ACRES" | "BIGHA" | "HECTARES",
       });
       
       if (res.success) {
@@ -269,7 +270,7 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
               <p className="text-body-sm text-content-secondary leading-relaxed mb-8">
                 {t.otpSentMsg} <span className="font-bold text-content-primary font-mono">+91 {phone}</span>.
                 <br />
-                <span className="text-signal-success font-bold mt-1 inline-block">Use test OTP: 1234</span>
+                <span className="text-signal-success font-bold mt-1 inline-block">Use test OTP: 123456</span>
               </p>
 
               <form onSubmit={handleOtpVerify} className="space-y-6">
@@ -278,10 +279,10 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                     className="flex gap-3 justify-center relative select-none cursor-pointer"
                     onClick={() => otpInputRef.current?.focus()}
                   >
-                    {[0, 1, 2, 3].map((idx) => (
+                    {[0, 1, 2, 3, 4, 5].map((idx) => (
                       <div
                         key={idx}
-                        className={`w-16 h-16 rounded-2xl border-[1.5px] flex items-center justify-center text-h3 font-bold font-mono transition-all duration-fast ${
+                        className={`w-12 h-14 rounded-2xl border-[1.5px] flex items-center justify-center text-h4 font-bold font-mono transition-all duration-fast ${
                           otp.length === idx
                             ? "border-signal-success bg-surface-elevated shadow-lg animate-pulse"
                             : otp[idx]
@@ -297,7 +298,7 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                       id="hidden-otp-input"
                       type="tel"
                       inputMode="numeric"
-                      maxLength={4}
+                      maxLength={6}
                       autoFocus
                       required
                       value={otp}

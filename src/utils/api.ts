@@ -1,5 +1,5 @@
 // src/utils/api.ts
-const BACKEND_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || "http://52.90.130.245:4000";
+const BACKEND_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || "https://52.90.130.245:4000";
 
 // Helper to get auth headers
 const getHeaders = () => {
@@ -20,7 +20,7 @@ export const api = {
     });
     return res.json();
   },
-  
+
   verifyOtp: async (phone: string, otp: string) => {
     const res = await fetch(`${BACKEND_URL}/api/auth/verify-otp`, {
       method: "POST",
