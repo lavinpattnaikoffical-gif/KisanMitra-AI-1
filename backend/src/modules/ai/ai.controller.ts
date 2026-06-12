@@ -14,7 +14,7 @@ export class AIController {
 
   async chat(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await aiService.chat(req.user!.id, req.body.message, req.body.language);
+      const result = await aiService.chat(req.user!.id, req.body.message, req.body.language, req.body.history);
       R.success(res, { answer: result });
     } catch (error) {
       next(error);

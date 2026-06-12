@@ -106,11 +106,11 @@ export const api = {
     return res.json();
   },
 
-  chatAI: async (message: string, language: string = "English") => {
+  chatAI: async (message: string, language: string = "English", history: Array<{role: string; text: string}> = []) => {
     const res = await fetch(`${BACKEND_URL}/api/ai/chat`, {
       method: "POST",
       headers: getHeaders(),
-      body: JSON.stringify({ message, language }),
+      body: JSON.stringify({ message, language, history }),
     });
     return res.json();
   },

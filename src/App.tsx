@@ -87,7 +87,12 @@ export default function App() {
   const [logs, setLogs] = useState<FarmActivityLog[]>(INITIAL_LOGS);
   const [products, setProducts] = useState<MarketProduct[]>(INITIAL_PRODUCTS);
   const [listings, setListings] = useState<any[]>([]);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem("kisan_chat_history");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [zones, setZones] = useState<ZoneData[]>([]);
   const [farmDevices, setFarmDevices] = useState<DeviceData[]>([]);
 
@@ -283,7 +288,13 @@ export default function App() {
   };
 
   const handleAddChatMessage = (msg: ChatMessage) => {
-    setChatHistory((prev) => [...prev, msg]);
+    setChatHistory((prev) => {
+      const updated = [...prev, msg];
+      // Keep last 50 messages in localStorage to avoid quota issues
+      const toSave = updated.slice(-50);
+      try { localStorage.setItem("kisan_chat_history", JSON.stringify(toSave)); } catch {}
+      return updated;
+    });
   };
 
   const handleAskRamuContext = (contextStr: string) => {

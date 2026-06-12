@@ -102,7 +102,7 @@ Instructions:
    * "Ramu AI" - Context-aware chatbot.
    * Compiles user's farm data and limits telemetry to latest + 24h avg to save tokens.
    */
-  async chat(userId: string, message: string, language: string = 'English'): Promise<string> {
+  async chat(userId: string, message: string, language: string = 'English', history: Array<{role: string; text: string}> = []): Promise<string> {
     const farms = await prisma.farm.findMany({
       where: { userId },
       include: {
@@ -171,14 +171,28 @@ Instructions:
 5. IMPORTANT: You MUST respond entirely in ${language}. ${language === 'Hindi' ? 'Use Devanagari script (हिन्दी में जवाब दें).' : language === 'Marathi' ? 'Use Devanagari script (मराठीत उत्तर द्या).' : 'Respond in English.'}
     `;
 
+    // Build multi-turn conversation contents
+    const contents: Array<{role: string; parts: Array<{text: string}>}> = [
+      { role: 'user', parts: [{ text: systemPrompt }] },
+    ];
+
+    // Add conversation history (last 10 turns for token efficiency)
+    const recentHistory = history.slice(-10);
+    for (const h of recentHistory) {
+      contents.push({
+        role: h.role === 'user' ? 'user' : 'model',
+        parts: [{ text: h.text }],
+      });
+    }
+
+    // Add the current message
+    contents.push({ role: 'user', parts: [{ text: message }] });
+
     // Try Gemini first, fallback to OpenRouter, then offline message
     try {
       const response = await ai.models.generateContent({
         model: env.GEMINI_MODEL,
-        contents: [
-          { role: 'user', parts: [{ text: systemPrompt }] },
-          { role: 'user', parts: [{ text: message }] }
-        ],
+        contents,
         config: {
           temperature: 0.7,
         },

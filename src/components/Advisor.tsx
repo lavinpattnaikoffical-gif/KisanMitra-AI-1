@@ -115,7 +115,12 @@ export default function Advisor({
     setLoading(true);
 
     try {
-      const resData = await api.chatAI(messageText, chatLanguage);
+      // Build conversation history for multi-turn context (last 10 messages)
+      const history = chatHistory.slice(-10).map(m => ({
+        role: m.sender === "user" ? "user" as const : "bot" as const,
+        text: m.text,
+      }));
+      const resData = await api.chatAI(messageText, chatLanguage, history);
       
       const botText = resData.data?.answer || resData.text || "I was unable to formulate a response.";
 
