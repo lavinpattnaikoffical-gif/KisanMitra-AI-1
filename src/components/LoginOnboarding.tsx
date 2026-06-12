@@ -123,7 +123,7 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
       setLoading(true);
       const res = await api.registerOtp({
         phone,
-        otp: otp || "123456",
+        otp: otp || "000000",
         name,
         state: farmState,
         district,
@@ -270,7 +270,7 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
               <p className="text-body-sm text-content-secondary leading-relaxed mb-8">
                 {t.otpSentMsg} <span className="font-bold text-content-primary font-mono">+91 {phone}</span>.
                 <br />
-                <span className="text-signal-success font-bold mt-1 inline-block">Use test OTP: 123456</span>
+                <span className="text-signal-success font-bold mt-1 inline-block">Use test OTP: 000000</span>
               </p>
 
               <form onSubmit={handleOtpVerify} className="space-y-6">

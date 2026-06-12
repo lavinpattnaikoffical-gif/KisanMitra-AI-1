@@ -28,6 +28,9 @@ import { ackCommandSchema } from './modules/telemetry/telemetry.schema';
 export function createApp(): Application {
   const app = express();
 
+  // Trust Nginx reverse proxy (required for express-rate-limit behind proxy)
+  app.set('trust proxy', 1);
+
   // ── Security ─────────────────────────────────────────────────
   app.use(helmet());
 
