@@ -158,5 +158,29 @@ export const api = {
       body: JSON.stringify(reportData),
     });
     return res.json();
+  },
+
+  // Telemetry — Live sensor data
+  getZoneLatestTelemetry: async (zoneId: string) => {
+    const res = await fetch(`${BACKEND_URL}/api/telemetry/${zoneId}/latest`, {
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
+  getDashboardStats: async () => {
+    const res = await fetch(`${BACKEND_URL}/api/dashboard`, {
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
+  // AI recommendation for a zone
+  getAIRecommendation: async (zoneId: string) => {
+    const res = await fetch(`${BACKEND_URL}/api/ai/recommendation/${zoneId}`, {
+      method: "POST",
+      headers: getHeaders(),
+    });
+    return res.json();
   }
 };
