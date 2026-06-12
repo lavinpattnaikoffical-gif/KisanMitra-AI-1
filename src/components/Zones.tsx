@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Layers, 
@@ -34,12 +34,59 @@ interface ZonesProps {
 
 const CROP_OPTIONS = ["Tomato", "Cotton", "Wheat", "Rice", "Corn", "Sugarcane", "Soybean", "Groundnut", "Onion", "Other"];
 
-export default function Zones({ profile, zones, onAddZone }: ZonesProps) {
+export default function Zones({ profile, zones, onAddZone, onNavigateTab }: ZonesProps) {
+  // Time-ago helper
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [showAddZone, setShowAddZone] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [justCreatedZone, setJustCreatedZone] = useState<string | null>(null);
+
+  // Live telemetry for each zone
+  const [liveTelemetry, setLiveTelemetry] = useState<Record<string, {
+    moisture: number | null;
+    temperature: number | null;
+    humidity: number | null;
+    battery: number | null;
+    createdAt: string;
+    device?: { deviceId: string; status: string };
+  }>>({});
+
+  // Fetch live telemetry for all zones
+  const fetchAllTelemetry = useCallback(async () => {
+    if (zones.length === 0) return;
+    try {
+      const results = await Promise.allSettled(
+        zones.map(z => api.getZoneLatestTelemetry(z.id))
+      );
+      const updated: typeof liveTelemetry = {};
+      results.forEach((res, i) => {
+        if (res.status === "fulfilled" && res.value?.success && res.value.data) {
+          updated[zones[i].id] = res.value.data;
+        }
+      });
+      setLiveTelemetry(prev => ({ ...prev, ...updated }));
+    } catch (err) {
+      console.warn("Zone telemetry fetch failed:", err);
+    }
+  }, [zones]);
+
+  // Poll every 5 seconds
+  useEffect(() => {
+    fetchAllTelemetry();
+    const interval = setInterval(fetchAllTelemetry, 5000);
+    return () => clearInterval(interval);
+  }, [fetchAllTelemetry]);
 
   // New zone form state
   const [newName, setNewName] = useState("");
@@ -270,31 +317,61 @@ export default function Zones({ profile, zones, onAddZone }: ZonesProps) {
                 </div>
               </div>
 
-              {/* Zone Metrics */}
+              {/* Zone Metrics — Live Telemetry */}
               <div className="p-5 grid grid-cols-4 gap-4">
-                <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
-                  <Droplet size={18} className="text-signal-info mb-1" />
-                  <span className="text-body-md font-bold text-content-primary">{zone.metrics.moisture}</span>
-                </div>
-                <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
-                  <ThermometerSun size={18} className="text-signal-warning mb-1" />
-                  <span className="text-body-md font-bold text-content-primary">{zone.metrics.temp}</span>
-                </div>
-                <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
-                  <CloudRain size={18} className="text-content-secondary mb-1" />
-                  <span className="text-body-md font-bold text-content-primary">{zone.metrics.weather}</span>
-                </div>
-                <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
-                  {zone.connectivity ? (
-                    <Wifi size={18} className="text-signal-success mb-1" />
-                  ) : (
-                    <WifiOff size={18} className="text-content-muted mb-1" />
-                  )}
-                  <span className={`text-body-sm font-bold ${zone.connectivity ? "text-signal-success" : "text-content-muted"}`}>
-                    {zone.connectivity ? "Online" : "No Device"}
-                  </span>
-                </div>
+                {(() => {
+                  const t = liveTelemetry[zone.id];
+                  const hasTelemetry = t && (t.moisture !== null || t.temperature !== null || t.humidity !== null);
+                  const moisture = hasTelemetry && t.moisture !== null ? `${t.moisture}%` : zone.metrics.moisture;
+                  const temp = hasTelemetry && t.temperature !== null ? `${t.temperature}°` : zone.metrics.temp;
+                  const humidity = hasTelemetry && t.humidity !== null ? `${t.humidity}%` : zone.metrics.weather;
+                  return (
+                    <>
+                      <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
+                        <Droplet size={18} className="text-signal-info mb-1" />
+                        <span className={`text-body-md font-bold ${hasTelemetry ? "text-content-primary" : "text-content-muted"}`}>{moisture}</span>
+                        <span className="text-micro text-content-muted">Moisture</span>
+                      </div>
+                      <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
+                        <ThermometerSun size={18} className="text-signal-warning mb-1" />
+                        <span className={`text-body-md font-bold ${hasTelemetry ? "text-content-primary" : "text-content-muted"}`}>{temp}</span>
+                        <span className="text-micro text-content-muted">Temp</span>
+                      </div>
+                      <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
+                        <CloudRain size={18} className="text-content-secondary mb-1" />
+                        <span className={`text-body-md font-bold ${hasTelemetry ? "text-content-primary" : "text-content-muted"}`}>{humidity}</span>
+                        <span className="text-micro text-content-muted">Humidity</span>
+                      </div>
+                      <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
+                        {hasTelemetry ? (
+                          <Wifi size={18} className="text-signal-success mb-1" />
+                        ) : zone.connectivity ? (
+                          <Wifi size={18} className="text-signal-success mb-1" />
+                        ) : (
+                          <WifiOff size={18} className="text-content-muted mb-1" />
+                        )}
+                        <span className={`text-body-sm font-bold ${hasTelemetry || zone.connectivity ? "text-signal-success" : "text-content-muted"}`}>
+                          {hasTelemetry ? "Live" : zone.connectivity ? "Online" : "No Device"}
+                        </span>
+                        <span className="text-micro text-content-muted">Status</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
+
+              {/* Last updated timestamp */}
+              {liveTelemetry[zone.id] && (
+                <div className="px-5 pb-3">
+                  <p className="text-micro text-content-muted flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-signal-success inline-block" />
+                    Updated {timeAgo(liveTelemetry[zone.id].createdAt)}
+                    {liveTelemetry[zone.id].device && (
+                      <span> • {liveTelemetry[zone.id].device!.deviceId}</span>
+                    )}
+                  </p>
+                </div>
+              )}
 
               {/* Warning Banner */}
               {zone.status === "warning" && (
