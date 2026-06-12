@@ -102,32 +102,90 @@ export default function App() {
       try {
         const token = localStorage.getItem("kisan_token");
         if (token) {
-          const [res, prodRes, myProdRes, iotRes, logsRes] = await Promise.all([
-            api.getMe(),
-            api.getProducts().catch(() => null),
-            api.getMyListings().catch(() => null),
-            api.getIotDashboard().catch(() => null),
-            api.getFarmActivityLogs().catch(() => null)
-          ]);
+          // 1. Fetch user profile
+          const res = await api.getMe();
           
           if (res.success) {
             const parsed = res.data;
             setProfile(parsed);
             setSelectedLanguage(parsed.language || "English");
             localStorage.setItem("kisan_profile", JSON.stringify(parsed));
+
+            // 2. Fetch farms + zones + devices from backend
+            try {
+              const farmsRes = await api.getFarms();
+              if (farmsRes.success && Array.isArray(farmsRes.data) && farmsRes.data.length > 0) {
+                const allZones: ZoneData[] = [];
+                const allDevices: DeviceData[] = [];
+
+                // For each farm, get full details with zones and devices
+                for (const farm of farmsRes.data) {
+                  try {
+                    const farmDetail = await api.getFarm(farm.id);
+                    if (farmDetail.success && farmDetail.data?.zones) {
+                      for (const z of farmDetail.data.zones) {
+                        allZones.push({
+                          id: z.id,
+                          name: z.name,
+                          crop: z.cropType || "Unknown",
+                          area: `${z.areaSize || 0} Acres`,
+                          health: 100,
+                          status: "healthy",
+                          metrics: { moisture: "--", temp: "--", weather: "--" },
+                          connectivity: false,
+                        });
+
+                        // Get devices for this zone
+                        if (z.devices && Array.isArray(z.devices)) {
+                          for (const d of z.devices) {
+                            allDevices.push({
+                              id: d.deviceId || d.id,
+                              dbId: d.id,
+                              type: (d.type === "SOIL" || d.type === "WEATHER" || d.type === "NPK") ? "SENSOR" : d.type === "PUMP" ? "PUMP" : "RELAY",
+                              zone: z.name,
+                              zoneId: z.id,
+                              status: d.status === "ONLINE" ? "online" : d.status === "OFFLINE" ? "offline" : "provisioned",
+                              lastSeen: d.lastSeen || new Date().toISOString(),
+                              battery: 100,
+                              firmware: "1.0.0",
+                              secret: "",
+                            });
+                          }
+                        }
+                      }
+                    }
+                  } catch (err) {
+                    console.warn(`Failed to fetch farm ${farm.id} details:`, err);
+                  }
+                }
+
+                if (allZones.length > 0) {
+                  setZones(allZones);
+                  localStorage.setItem("kisan_zones", JSON.stringify(allZones));
+                }
+                if (allDevices.length > 0) {
+                  setFarmDevices(allDevices);
+                  localStorage.setItem("kisan_devices", JSON.stringify(allDevices));
+                }
+              }
+            } catch (err) {
+              console.warn("Failed to fetch farms/zones/devices from backend:", err);
+            }
+
+            // 3. Fetch other data in parallel
+            const [prodRes, myProdRes, logsRes] = await Promise.all([
+              api.getProducts().catch(() => null),
+              api.getMyListings().catch(() => null),
+              api.getFarmActivityLogs().catch(() => null)
+            ]);
+            
+            if (prodRes && prodRes.success) setProducts(prodRes.data);
+            if (myProdRes && myProdRes.success) setListings(myProdRes.data);
+            if (logsRes && logsRes.success) setLogs(logsRes.data);
           } else {
             localStorage.removeItem("kisan_token");
             localStorage.removeItem("kisan_profile");
           }
-          
-          if (prodRes && prodRes.success) setProducts(prodRes.data);
-          if (myProdRes && myProdRes.success) setListings(myProdRes.data);
-          if (iotRes && iotRes.success) {
-            if (iotRes.data.metrics) setMetrics(iotRes.data.metrics);
-            if (iotRes.data.alerts) setAlerts(iotRes.data.alerts);
-          }
-          if (logsRes && logsRes.success) setLogs(logsRes.data);
-          
         } else {
           // Fallback to local profile if token is missing
           const savedProfile = localStorage.getItem("kisan_profile");
@@ -138,19 +196,26 @@ export default function App() {
           }
         }
         
+        // Load cached local data as fallback (will be overwritten by backend data above)
         const savedScans = localStorage.getItem("kisan_scans");
         if (savedScans) setScans(JSON.parse(savedScans));
 
-        const savedChat = localStorage.getItem("kisan_chat");
-        if (savedChat) setChatHistory(JSON.parse(savedChat));
-
-        const savedZones = localStorage.getItem("kisan_zones");
-        if (savedZones) setZones(JSON.parse(savedZones));
-
-        const savedDevices = localStorage.getItem("kisan_devices");
-        if (savedDevices) setFarmDevices(JSON.parse(savedDevices));
+        // Only load from localStorage if backend didn't provide them
+        if (zones.length === 0) {
+          const savedZones = localStorage.getItem("kisan_zones");
+          if (savedZones) setZones(JSON.parse(savedZones));
+        }
+        if (farmDevices.length === 0) {
+          const savedDevices = localStorage.getItem("kisan_devices");
+          if (savedDevices) setFarmDevices(JSON.parse(savedDevices));
+        }
       } catch (err) {
         console.error("Failed to initialize app data", err);
+        // Last resort: try localStorage
+        const savedZones = localStorage.getItem("kisan_zones");
+        if (savedZones) setZones(JSON.parse(savedZones));
+        const savedDevices = localStorage.getItem("kisan_devices");
+        if (savedDevices) setFarmDevices(JSON.parse(savedDevices));
       }
     };
     initApp();
