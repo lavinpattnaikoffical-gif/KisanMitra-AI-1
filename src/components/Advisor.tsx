@@ -22,7 +22,8 @@ import {
   Camera,
   Image as ImageIcon,
   FileText,
-  Languages
+  Languages,
+  Trash2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile, ChatMessage } from "../types";
@@ -37,6 +38,7 @@ interface AdvisorProps {
   onAddChatMessage: (msg: ChatMessage) => void;
   onTriggerIrrigation: (zone: string) => void;
   contextEntryTab?: "dashboard" | "detect" | "market" | "activity" | "ai" | "settings";
+  onClearChat: () => void;
 }
 
 export default function Advisor({
@@ -46,7 +48,8 @@ export default function Advisor({
   chatHistory,
   onAddChatMessage,
   onTriggerIrrigation,
-  contextEntryTab
+  contextEntryTab,
+  onClearChat
 }: AdvisorProps) {
   const t = TRANSLATIONS[selectedLanguage];
 
@@ -306,6 +309,30 @@ export default function Advisor({
             </button>
           )}
 
+          {/* Clear Chat Button */}
+          <button
+            id="clear-chat-btn"
+            onClick={() => {
+              const confirmText = selectedLanguage === "Hindi"
+                ? "क्या आप निश्चित रूप से चैट इतिहास को मिटाना चाहते हैं?"
+                : selectedLanguage === "Marathi"
+                ? "तुम्हाला नक्की चॅट इतिहास पुसायचा आहे का?"
+                : selectedLanguage === "Gujarati"
+                ? "શું તમે ખरेખર ચેટ ઇતિહાસ સાફ કરવા માંગો છો?"
+                : selectedLanguage === "Tamil"
+                ? "உரையாடல் வரலாற்றை நிச்சயமாக அழிக்க வேண்டுமா?"
+                : "Are you sure you want to clear the chat history?";
+              if (window.confirm(confirmText)) {
+                onClearChat();
+              }
+            }}
+            className="w-12 h-12 rounded-2xl flex items-center justify-center bg-surface-elevated hover:bg-signal-critical/10 text-content-muted hover:text-signal-critical border border-border-subtle hover:border-signal-critical/20 transition-all duration-fast cursor-pointer"
+            title={selectedLanguage === "Hindi" ? "चैट मिटाएं" : selectedLanguage === "Marathi" ? "चॅट पुसा" : "Clear Chat"}
+            aria-label="Clear chat history"
+          >
+            <Trash2 size={20} />
+          </button>
+
           {/* Chat History Toggle */}
           <button
             id="chat-history-toggle"
@@ -378,12 +405,89 @@ export default function Advisor({
         {/* Message history panel */}
         <div className="flex-1 flex flex-col overflow-hidden bg-surface-base">
           <div className="flex-1 overflow-y-auto py-6 px-4 sm:px-8 space-y-6 pr-2 chat-scroll">
-            {chatHistory.map((item) => (
-              <div
-                key={item.id}
-                id={`msg-${item.id}`}
-                className={`flex gap-4 transition-all rounded-2xl ${item.sender === "user" ? "justify-end" : "justify-start"}`}
-              >
+            {chatHistory.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 max-w-xl mx-auto space-y-8 select-none my-auto">
+                <motion.div 
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 100 }}
+                  className="w-20 h-20 bg-signal-success/10 text-signal-success rounded-3xl flex items-center justify-center border border-signal-success/20 shadow-lg relative"
+                >
+                  <Bot size={40} className="animate-pulse" />
+                  <span className="absolute top-0 right-0 w-3 h-3 bg-signal-success rounded-full border-2 border-surface-base animate-ping" />
+                </motion.div>
+                
+                <div>
+                  <h3 className="text-h3 font-bold text-content-primary tracking-wide">
+                    {selectedLanguage === "Hindi" ? "नमस्ते! मैं हूँ रामू (RAMU)" : 
+                     selectedLanguage === "Marathi" ? "नमस्कार! मी आहे रामू (RAMU)" : 
+                     selectedLanguage === "Gujarati" ? "નમસ્તે! હું છું રામુ (RAMU)" :
+                     selectedLanguage === "Tamil" ? "வணக்கம்! நான் ராமு (RAMU)" :
+                     "Namaste! I am RAMU"}
+                  </h3>
+                  <p className="text-body-md text-content-muted mt-2 leading-relaxed">
+                    {selectedLanguage === "Hindi" ? "आपका व्यक्तिगत कृषि एआई सलाहकार। मैं आपके खेत के सेंसर डेटा, मौसम और फसल स्वास्थ्य के आधार पर सही सलाह दे सकता हूँ।" : 
+                     selectedLanguage === "Marathi" ? "तुमचा वैयक्तिक कृषी AI सल्लागार. मी तुमच्या शेतातील सेन्सर डेटा, हवामान आणि पीक आरोग्यावरून योग्य सल्ला देऊ शकतो." : 
+                     selectedLanguage === "Gujarati" ? "તમારા અંગત કૃષિ એઆઈ સલાહકાર. હું તમારા ખેતરના સેન્સર ડેટા, હવામાન અને પાક તંદુરસ્તીના આધારે યોગ્ય સલાહ આપી શકું છું." :
+                     selectedLanguage === "Tamil" ? "உங்கள் தனிப்பட்ட விவசாய AI ஆலோசகர். உங்கள் பண்ணையின் சென்சார் தரவு, வானிலை மற்றும் பயிர் ஆரோக்கியத்தின் அடிப்படையில் நான் சிறந்த ஆலோசனைகளை வழங்க முடியும்." :
+                     "Your personal AI agricultural assistant. Ask me anything about crop diseases, live sensor data, irrigation cycles, or market mandi rates."}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-4">
+                  {[
+                    {
+                      title: selectedLanguage === "Hindi" ? "बीमारी की पहचान" : selectedLanguage === "Marathi" ? "रोग निदान" : selectedLanguage === "Gujarati" ? "રોગ ઓળખ" : selectedLanguage === "Tamil" ? "நோய் கண்டறிதல்" : "Diagnose Crop Blight",
+                      desc: selectedLanguage === "Hindi" ? "पत्ती की फोटो अपलोड करके बीमारी जानें" : selectedLanguage === "Marathi" ? "पानांचे फोटो अपलोड करून रोग तपासा" : selectedLanguage === "Gujarati" ? "પાંદડાનો ફોટો અપલોડ કરીને રોગ જાણો" : selectedLanguage === "Tamil" ? "இலையின் புகைப்படத்தை பதிவேற்றி நோயைக் கண்டறியவும்" : "Upload leaf photos to detect pest issues",
+                      prompt: selectedLanguage === "Hindi" ? "कपास के पत्तों पर सफेद धब्बों का इलाज क्या है?" : selectedLanguage === "Marathi" ? "कापसाच्या पानांवरील पांढऱ्या ठिपक्यांचे निवारण काय आहे?" : selectedLanguage === "Gujarati" ? "કપાસના પાંદડા પર સફેદ ડાઘનો ઇલાજ શું છે?" : selectedLanguage === "Tamil" ? "பருத்தி இலைகளில் உள்ள வெள்ளை புள்ளிகளுக்கு என்ன சிகிச்சை?" : "What is the cure for powdery mildew on cotton leaves?"
+                    },
+                    {
+                      title: selectedLanguage === "Hindi" ? "लाइव सेंसर रिपोर्ट" : selectedLanguage === "Marathi" ? "लाइव्ह सेन्सर अहवाल" : selectedLanguage === "Gujarati" ? "લાઈવ સેન્સર રિપોર્ટ" : selectedLanguage === "Tamil" ? "நேரடி சென்சார் அறிக்கை" : "Live Soil Data",
+                      desc: selectedLanguage === "Hindi" ? "मिट्टी की नमी और तापमान की स्थिति पूछें" : selectedLanguage === "Marathi" ? "मातीतील ओलावा व तापमान विचारा" : selectedLanguage === "Gujarati" ? "જમીનમાં ભેજ અને તાપમાન વિશે પૂછો" : selectedLanguage === "Tamil" ? "மண்ணின் ஈரப்பதம் மற்றும் வெப்பநிலையை அறியுங்கள்" : "Ask about moisture and temperature levels",
+                      prompt: selectedLanguage === "Hindi" ? "मेरे खेत में मिट्टी की नमी का क्या स्तर है?" : selectedLanguage === "Marathi" ? "माझ्या शेतात मातीतील ओलावा किती आहे?" : selectedLanguage === "Gujarati" ? "મારા ખેતરમાં જમીનનો ભેજ કેટલો છે?" : selectedLanguage === "Tamil" ? "என் பண்ணையில் மண்ணின் ஈரப்பதம் என்ன அளவில் உள்ளது?" : "What is the live soil moisture level in my farm?"
+                    },
+                    {
+                      title: selectedLanguage === "Hindi" ? "सिंचाई सलाह" : selectedLanguage === "Marathi" ? "सिंचन सल्ला" : selectedLanguage === "Gujarati" ? "સિંચાઈ સલાહ" : selectedLanguage === "Tamil" ? "நீர் மேலாண்மை" : "Irrigation Strategy",
+                      desc: selectedLanguage === "Hindi" ? "किस ज़ोन को पानी चाहिए यह जानें" : selectedLanguage === "Marathi" ? "कोणत्या झोनला पाण्याची गरज आहे ते जाणून घ्या" : selectedLanguage === "Gujarati" ? "કયા ઝોનને પાણીની જરૂર છે તે જાણો" : selectedLanguage === "Tamil" ? "எந்த பகுதிக்கு நீர் தேவை என்பதை அறியுங்கள்" : "Find out which zones require watering",
+                      prompt: selectedLanguage === "Hindi" ? "क्या मुझे आज किसी ज़ोन में पानी देना चाहिए?" : selectedLanguage === "Marathi" ? "मला आज कोणत्या झोनला पाणी देण्याची गरज आहे का?" : selectedLanguage === "Gujarati" ? "શું મારે આજે કોઈ ઝોનમાં પાણી આપવું જોઈએ?" : selectedLanguage === "Tamil" ? "இன்று ஏதேனும் பகுதிக்கு நீர் பாய்ச்ச வேண்டுமா?" : "Do any of my farm zones need irrigation today?"
+                    },
+                    {
+                      title: selectedLanguage === "Hindi" ? "मंडी के ताज़ा भाव" : selectedLanguage === "Marathi" ? "ताजे बाजार भाव" : selectedLanguage === "Gujarati" ? "મંડીના તાજા ભાવો" : selectedLanguage === "Tamil" ? "மண்டி சந்தை நிலவரம்" : "Mandi Market Rates",
+                      desc: selectedLanguage === "Hindi" ? "मंडी रेट और सबसे सही बेचने का समय" : selectedLanguage === "Marathi" ? "बाजार भाव आणि विक्रीची योग्य वेळ" : selectedLanguage === "Gujarati" ? "મંડી ભાવો અને વેચવાનો યોગ્ય સમય" : selectedLanguage === "Tamil" ? "சந்தையின் தற்போதைய விலை நிலவரம்" : "Check current market rates for your crop",
+                      prompt: selectedLanguage === "Hindi" ? "आज कपास का मंडी भाव क्या चल रहा है?" : selectedLanguage === "Marathi" ? "आज कापसाचा बाजार भाव काय चालू आहे?" : selectedLanguage === "Gujarati" ? "આજે કપાસનો મંડી ભાવ શું ચાલી રહ્યો છે?" : selectedLanguage === "Tamil" ? "இன்று பருத்தியின் சந்தை விலை என்ன?" : "What are the latest mandi rates for cotton?"
+                    }
+                  ].map((item, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setInputMsg(item.prompt);
+                        handleSend(item.prompt);
+                      }}
+                      className="p-5 text-left bg-surface-elevated hover:bg-surface-glass border border-border-subtle hover:border-signal-success/40 rounded-2xl transition-all duration-normal hover:shadow-md cursor-pointer group flex flex-col justify-between"
+                    >
+                      <div>
+                        <h4 className="text-body-sm font-bold text-content-primary group-hover:text-signal-success transition-colors flex items-center gap-2">
+                          <Sparkles size={16} className="text-signal-success" />
+                          {item.title}
+                        </h4>
+                        <p className="text-caption text-content-muted mt-1 font-semibold leading-relaxed">{item.desc}</p>
+                      </div>
+                      <span className="text-caption text-signal-success font-bold mt-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {selectedLanguage === "Hindi" ? "पूछें" : selectedLanguage === "Marathi" ? "विचारा" : selectedLanguage === "Gujarati" ? "પૂછો" : selectedLanguage === "Tamil" ? "கேட்க" : "Ask RAMU"}
+                        <ArrowRight size={14} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              chatHistory.map((item) => (
+                <div
+                  key={item.id}
+                  id={`msg-${item.id}`}
+                  className={`flex gap-4 transition-all rounded-2xl ${item.sender === "user" ? "justify-end" : "justify-start"}`}
+                >
                 {item.sender === "bot" && (
                   <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border-subtle shrink-0 flex items-center justify-center">
                     <Bot size={20} className="text-signal-success" />
@@ -436,7 +540,8 @@ export default function Advisor({
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+          )}
 
             {loading && (
               <div className="flex gap-4 justify-start">

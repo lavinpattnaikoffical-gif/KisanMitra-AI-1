@@ -362,6 +362,11 @@ export default function App() {
     });
   };
 
+  const handleClearChat = () => {
+    setChatHistory([]);
+    try { localStorage.removeItem("kisan_chat_history"); } catch {}
+  };
+
   const handleAskRamuContext = (contextStr: string) => {
     // Add user message with context
     const userMsg: ChatMessage = {
@@ -615,6 +620,7 @@ export default function App() {
                   onAddChatMessage={handleAddChatMessage}
                   onTriggerIrrigation={handleTriggerIrrigation}
                   contextEntryTab={currentTab}
+                  onClearChat={handleClearChat}
                 />
               )}
 
