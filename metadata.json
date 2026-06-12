@@ -1,0 +1,6 @@
+{
+  "name": "KisanMitr AI",
+  "description": "An advanced, multilingual offline-first agricultural companion and intelligence platform for Indian farmers.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

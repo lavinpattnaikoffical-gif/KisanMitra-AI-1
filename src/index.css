@@ -1,0 +1,277 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* -------------------------------
+     TYPOGRAPHY SYSTEM
+     ------------------------------- */
+  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+
+  /* Dashboard Metrics (48px-64px, 700, -0.04em) */
+  --text-display-xl: 4rem;
+  --text-display-xl--line-height: 1.1;
+  --text-display-xl--letter-spacing: -0.04em;
+  --text-display-xl--font-weight: 700;
+
+  --text-display-lg: 3rem;
+  --text-display-lg--line-height: 1.1;
+  --text-display-lg--letter-spacing: -0.04em;
+  --text-display-lg--font-weight: 700;
+
+  /* Dashboard Metrics / Large Numerical Emphasis */
+  --text-h2: 3.5rem;
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: -0.04em;
+  --text-h2--font-weight: 700;
+
+  /* Page Titles (32px, 600, -0.03em) */
+  --text-h1: 2rem;
+  --text-h1--line-height: 1.2;
+  --text-h1--letter-spacing: -0.03em;
+  --text-h1--font-weight: 600;
+
+  --text-h3: 2rem;
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.03em;
+  --text-h3--font-weight: 600;
+
+  /* Section Titles (20px, 600) */
+  --text-h4: 1.25rem;
+  --text-h4--line-height: 1.4;
+  --text-h4--font-weight: 600;
+
+  --text-body-lg: 1.25rem;
+  --text-body-lg--line-height: 1.4;
+  --text-body-lg--font-weight: 600;
+
+  /* Card Titles (15px, 600) */
+  --text-body-md: 0.9375rem;
+  --text-body-md--line-height: 1.5;
+  --text-body-md--font-weight: 600;
+
+  /* Body Text (14px, 400, 1.6) */
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.6;
+  --text-body-sm--font-weight: 400;
+
+  /* Labels (12px, 500, 0.06em) */
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
+  --text-caption--font-weight: 500;
+  --text-caption--letter-spacing: 0.06em;
+
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 1.4;
+  --text-micro--font-weight: 500;
+  --text-micro--letter-spacing: 0.06em;
+
+  /* -------------------------------
+     SPACING SYSTEM (8pt grid)
+     ------------------------------- */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-24: 96px;
+
+  /* -------------------------------
+     RADIUS SYSTEM
+     ------------------------------- */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-xxl: 32px;
+
+  /* -------------------------------
+     SEMANTIC COLOR TOKENS
+     ------------------------------- */
+  --color-surface-base: var(--c-surface-base);
+  --color-surface-flat: var(--c-surface-flat);
+  --color-surface-elevated: var(--c-surface-elevated);
+  --color-surface-glass: var(--c-surface-glass);
+
+  --color-content-primary: var(--c-content-primary);
+  --color-content-secondary: var(--c-content-secondary);
+  --color-content-muted: var(--c-content-muted);
+
+  --color-border-subtle: var(--c-border-subtle);
+  --color-border-strong: var(--c-border-strong);
+
+  --color-signal-success: var(--c-signal-success);
+  --color-signal-warning: var(--c-signal-warning);
+  --color-signal-critical: var(--c-signal-critical);
+  --color-signal-info: var(--c-signal-info);
+}
+
+@layer base {
+  :root {
+    /* Light Theme (Warm Neutral Whites & Stone Grays) */
+    --c-surface-base: #FDFCFB;
+    --c-surface-flat: #ffffff;
+    --c-surface-elevated: #F4F3F0;
+    --c-surface-glass: rgba(253, 252, 251, 0.75);
+
+    --c-content-primary: #1C1C1E;
+    --c-content-secondary: #5A5A5F;
+    --c-content-muted: #8E8E93;
+
+    --c-border-subtle: rgba(0, 0, 0, 0.06);
+    --c-border-strong: rgba(0, 0, 0, 0.12);
+
+    /* Green is strictly for signals */
+    --c-signal-success: #34C759;
+    --c-signal-warning: #FF9500;
+    --c-signal-critical: #FF3B30;
+    --c-signal-info: #007AFF;
+  }
+
+  .dark {
+    /* Dark Theme (Deep Charcoal & Slate) */
+    --c-surface-base: #0D0D0E;
+    --c-surface-flat: #141415;
+    --c-surface-elevated: #1C1C1E;
+    --c-surface-glass: rgba(13, 13, 14, 0.75);
+
+    --c-content-primary: #F5F5F7;
+    --c-content-secondary: #A1A1A6;
+    --c-content-muted: #6E6E73;
+
+    --c-border-subtle: rgba(255, 255, 255, 0.08);
+    --c-border-strong: rgba(255, 255, 255, 0.15);
+
+    --c-signal-success: #30D158;
+    --c-signal-warning: #FF9F0A;
+    --c-signal-critical: #FF453A;
+    --c-signal-info: #0A84FF;
+  }
+
+  body {
+    background-color: var(--c-surface-base);
+    color: var(--c-content-primary);
+    font-family: var(--font-sans);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* -------------------------------
+   MATERIAL SYSTEM UTILITIES
+   ------------------------------- */
+@utility material-surface {
+  background-color: var(--c-surface-flat);
+  border: 1px solid transparent;
+}
+
+@utility material-elevated {
+  background-color: var(--c-surface-elevated);
+  border: 1px solid var(--c-border-subtle);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 1px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.dark .material-elevated {
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), inset 0 -1px 1px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+@utility material-floating {
+  background-color: var(--c-surface-flat);
+  border: 1px solid var(--c-border-subtle);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 1px rgba(0, 0, 0, 0.02), 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.dark .material-floating {
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), inset 0 -1px 1px rgba(0, 0, 0, 0.1), 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+@utility material-glass {
+  background-color: var(--c-surface-glass);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--c-border-subtle);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 1px rgba(0, 0, 0, 0.05), 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+.dark .material-glass {
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), inset 0 -1px 1px rgba(0, 0, 0, 0.2), 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+@utility edge-lighting {
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 1px rgba(0, 0, 0, 0.05);
+}
+.dark .edge-lighting {
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* -------------------------------
+   MOTION SYSTEM
+   ------------------------------- */
+@utility duration-fast {
+  transition-duration: 150ms;
+}
+
+@utility duration-normal {
+  transition-duration: 250ms;
+}
+
+@utility duration-slow {
+  transition-duration: 400ms;
+}
+
+@utility ease-spring {
+  transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@utility ease-apple {
+  transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bounce-slow {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@utility animate-spin-slow {
+  animation: spin-slow 6s linear infinite;
+}
+
+@utility animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+/* Miscellaneous Utilities */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-border-strong);
+  border-radius: 999px;
+}
