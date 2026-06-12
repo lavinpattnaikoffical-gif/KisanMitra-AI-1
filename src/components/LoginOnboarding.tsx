@@ -93,7 +93,7 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
       setLoading(true);
       const res = await api.verifyOtp(phone, otp);
       if (res.success) {
-        if (res.data.action === "login") {
+        if (!res.data.isNewUser) {
           localStorage.setItem("kisan_token", res.data.token);
           onComplete({ ...res.data.user, language: selectedLanguage });
         } else {
