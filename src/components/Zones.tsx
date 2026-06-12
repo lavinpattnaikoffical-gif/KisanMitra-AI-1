@@ -11,11 +11,13 @@ import {
   AlertTriangle,
   Plus,
   X,
-  Sprout
+  Sprout,
+  Loader2
 } from "lucide-react";
 import { UserProfile } from "../types";
 import { ZoneData } from "./Dashboard";
 import ZoneDetails from "./ZoneDetails";
+import { api } from "../utils/api";
 
 interface ZonesProps {
   profile: UserProfile;
@@ -30,29 +32,93 @@ const CROP_OPTIONS = ["Tomato", "Cotton", "Wheat", "Rice", "Corn", "Sugarcane", 
 export default function Zones({ profile, zones, onAddZone }: ZonesProps) {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [showAddZone, setShowAddZone] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   // New zone form state
   const [newName, setNewName] = useState("");
   const [newCrop, setNewCrop] = useState("Tomato");
   const [newArea, setNewArea] = useState("");
 
-  const handleCreateZone = () => {
+  const handleCreateZone = async () => {
     if (!newName.trim() || !newArea.trim()) return;
-    const zone: ZoneData = {
-      id: `zone-${Date.now()}`,
-      name: newName.trim(),
-      crop: newCrop,
-      area: `${newArea} Acres`,
-      health: 100,
-      status: "healthy",
-      metrics: { moisture: "--", temp: "--", weather: "No data" },
-      connectivity: false,
-    };
-    onAddZone(zone);
-    setNewName("");
-    setNewCrop("Tomato");
-    setNewArea("");
-    setShowAddZone(false);
+    setCreating(true);
+    setCreateError(null);
+
+    try {
+      // Step 1: Get or create a farm
+      let farmId: string | null = null;
+      const farmsRes = await api.getFarms();
+      if (farmsRes.success && farmsRes.data?.length > 0) {
+        farmId = farmsRes.data[0].id;
+      } else {
+        // Auto-create a default farm
+        const createFarmRes = await api.createFarm({
+          name: `${profile.name}'s Farm`,
+          location: profile.district || "Unknown",
+          totalArea: parseFloat(newArea) || 1,
+          areaUnit: "ACRES",
+        });
+        if (createFarmRes.success) {
+          farmId = createFarmRes.data.id;
+        }
+      }
+
+      if (!farmId) {
+        throw new Error("Could not create farm. Please try again.");
+      }
+
+      // Step 2: Create zone under the farm via backend
+      const zoneRes = await api.createZone(farmId, {
+        name: newName.trim(),
+        cropType: newCrop,
+        areaSize: parseFloat(newArea) || 0,
+        areaUnit: "ACRES",
+        irrigationType: "DRIP",
+        moistureThreshold: 40,
+      });
+
+      if (zoneRes.success) {
+        const zone: ZoneData = {
+          id: zoneRes.data.id, // Real CUID from database!
+          name: zoneRes.data.name,
+          crop: zoneRes.data.cropType || newCrop,
+          area: `${newArea} Acres`,
+          health: 100,
+          status: "healthy",
+          metrics: { moisture: "--", temp: "--", weather: "No data" },
+          connectivity: false,
+        };
+        onAddZone(zone);
+        setNewName("");
+        setNewCrop("Tomato");
+        setNewArea("");
+        setShowAddZone(false);
+      } else {
+        setCreateError(zoneRes.message || "Failed to create zone.");
+      }
+    } catch (err: any) {
+      console.warn("Backend zone creation failed, creating locally:", err);
+      // Fallback to local-only
+      const zone: ZoneData = {
+        id: `zone-${Date.now()}`,
+        name: newName.trim(),
+        crop: newCrop,
+        area: `${newArea} Acres`,
+        health: 100,
+        status: "healthy",
+        metrics: { moisture: "--", temp: "--", weather: "No data" },
+        connectivity: false,
+      };
+      onAddZone(zone);
+      setCreateError("⚠️ Created locally (backend unavailable). Devices won't link until online.");
+      setNewName("");
+      setNewCrop("Tomato");
+      setNewArea("");
+      setTimeout(() => setShowAddZone(false), 2000);
+    } finally {
+      setCreating(false);
+    }
   };
 
   if (selectedZone) {
@@ -233,14 +299,21 @@ export default function Zones({ profile, zones, onAddZone }: ZonesProps) {
                   />
                 </div>
 
+                {createError && (
+                  <div className="p-3 rounded-xl bg-signal-warning/10 border border-signal-warning/20 text-body-sm text-signal-warning">
+                    {createError}
+                  </div>
+                )}
+
                 <div className="pt-3 flex gap-3 justify-end">
-                  <button onClick={() => setShowAddZone(false)} className="px-6 py-3 rounded-xl font-bold text-content-secondary hover:bg-surface-elevated transition-colors cursor-pointer">Cancel</button>
+                  <button onClick={() => { setShowAddZone(false); setCreateError(null); }} className="px-6 py-3 rounded-xl font-bold text-content-secondary hover:bg-surface-elevated transition-colors cursor-pointer">Cancel</button>
                   <button 
                     onClick={handleCreateZone}
-                    disabled={!newName.trim() || !newArea.trim()}
-                    className="px-6 py-3 rounded-xl font-bold bg-content-primary text-surface-base hover:opacity-90 transition-opacity disabled:opacity-40 cursor-pointer"
+                    disabled={!newName.trim() || !newArea.trim() || creating}
+                    className="px-6 py-3 rounded-xl font-bold bg-content-primary text-surface-base hover:opacity-90 transition-opacity disabled:opacity-40 cursor-pointer flex items-center gap-2"
                   >
-                    Create Zone
+                    {creating && <Loader2 size={16} className="animate-spin" />}
+                    {creating ? "Creating..." : "Create Zone"}
                   </button>
                 </div>
               </div>

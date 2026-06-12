@@ -182,5 +182,49 @@ export const api = {
       headers: getHeaders(),
     });
     return res.json();
+  },
+
+  // ── Farms ──
+  getFarms: async () => {
+    const res = await fetch(`${BACKEND_URL}/api/farms`, {
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
+  createFarm: async (data: { name: string; location: string; totalArea: number; areaUnit: string }) => {
+    const res = await fetch(`${BACKEND_URL}/api/farms`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  // ── Zones ──
+  createZone: async (farmId: string, data: any) => {
+    const res = await fetch(`${BACKEND_URL}/api/farms/${farmId}/zones`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  // ── Devices ──
+  createDevice: async (data: { zoneId: string; role: string; type: string; firmware?: string }) => {
+    const res = await fetch(`${BACKEND_URL}/api/devices`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  getDevicesByZone: async (zoneId: string) => {
+    const res = await fetch(`${BACKEND_URL}/api/devices/zone/${zoneId}`, {
+      headers: getHeaders(),
+    });
+    return res.json();
   }
 };
