@@ -33,9 +33,9 @@ import { api } from "./utils/api";
 // Components
 import LivingSurface from "./components/LivingSurface";
 import LoginOnboarding from "./components/LoginOnboarding";
-import Dashboard from "./components/Dashboard";
+import Dashboard, { ZoneData } from "./components/Dashboard";
 import Zones from "./components/Zones";
-import Devices from "./components/Devices";
+import Devices, { DeviceData } from "./components/Devices";
 import Marketplace from "./components/Marketplace";
 import Telemetry from "./components/Telemetry";
 import Advisor from "./components/Advisor";
@@ -88,6 +88,8 @@ export default function App() {
   const [products, setProducts] = useState<MarketProduct[]>(INITIAL_PRODUCTS);
   const [listings, setListings] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [zones, setZones] = useState<ZoneData[]>([]);
+  const [farmDevices, setFarmDevices] = useState<DeviceData[]>([]);
 
   // Load from local storage and backend
   useEffect(() => {
@@ -136,6 +138,12 @@ export default function App() {
 
         const savedChat = localStorage.getItem("kisan_chat");
         if (savedChat) setChatHistory(JSON.parse(savedChat));
+
+        const savedZones = localStorage.getItem("kisan_zones");
+        if (savedZones) setZones(JSON.parse(savedZones));
+
+        const savedDevices = localStorage.getItem("kisan_devices");
+        if (savedDevices) setFarmDevices(JSON.parse(savedDevices));
       } catch (err) {
         console.error("Failed to initialize app data", err);
       }
@@ -246,6 +254,8 @@ export default function App() {
     setListings([]);
     setAlerts(INITIAL_ALERTS);
     setChatHistory([]);
+    setZones([]);
+    setFarmDevices([]);
   };
 
   // Add items committed across secondary logs
@@ -476,8 +486,7 @@ export default function App() {
                   profile={profile} 
                   selectedLanguage={selectedLanguage}
                   onNavigateTab={setCurrentTab}
-                  metrics={metrics}
-                  alerts={alerts}
+                  zones={zones}
                 />
               )}
 
@@ -486,6 +495,12 @@ export default function App() {
                   profile={profile}
                   selectedLanguage={selectedLanguage}
                   onNavigateTab={setCurrentTab}
+                  zones={zones}
+                  onAddZone={(zone) => {
+                    const updated = [...zones, zone];
+                    setZones(updated);
+                    localStorage.setItem("kisan_zones", JSON.stringify(updated));
+                  }}
                 />
               )}
 
@@ -494,6 +509,13 @@ export default function App() {
                   profile={profile}
                   selectedLanguage={selectedLanguage}
                   onNavigateTab={setCurrentTab}
+                  zones={zones}
+                  devices={farmDevices}
+                  onAddDevice={(device) => {
+                    const updated = [...farmDevices, device];
+                    setFarmDevices(updated);
+                    localStorage.setItem("kisan_devices", JSON.stringify(updated));
+                  }}
                 />
               )}
 
