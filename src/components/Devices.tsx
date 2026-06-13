@@ -139,28 +139,16 @@ export default function Devices({ zones, devices, onAddDevice }: DevicesProps) {
     setTestResult(null);
 
     try {
-      const BACKEND_URL = (import.meta as any).env?.VITE_API_URL || (import.meta as any).env?.VITE_BACKEND_URL || "https://52.90.130.245:4000";
-      
-      const res = await fetch(`${BACKEND_URL}/api/telemetry/ingest`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-device-id": device.id,
-          "x-device-secret": device.secret,
-        },
-        body: JSON.stringify({
-          temperature: 28 + Math.random() * 8,    // 28-36°C
-          humidity: 50 + Math.random() * 30,       // 50-80%
-          moisture: 30 + Math.random() * 50,       // 30-80%
-        })
+      const res = await api.sendTestTelemetry(device.id, device.secret, {
+        temperature: 28 + Math.random() * 8,    // 28-36°C
+        humidity: 50 + Math.random() * 30,       // 50-80%
+        moisture: 30 + Math.random() * 50,       // 30-80%
       });
-
-      const data = await res.json();
       
-      if (res.ok && data.success) {
-        setTestResult({ deviceId: device.id, success: true, message: `✅ Reading stored! ID: ${data.data?.id?.slice(0,8)}...` });
+      if (res.success) {
+        setTestResult({ deviceId: device.id, success: true, message: `✅ Reading stored! ID: ${res.data?.id?.slice(0,8)}...` });
       } else {
-        setTestResult({ deviceId: device.id, success: false, message: `❌ ${data.message || "Server rejected the reading"}` });
+        setTestResult({ deviceId: device.id, success: false, message: `❌ ${res.message || "Server rejected the reading"}` });
       }
     } catch (err: any) {
       setTestResult({ deviceId: device.id, success: false, message: `❌ Network error: ${err.message}` });

@@ -1,5 +1,7 @@
 // src/utils/api.ts
-const BACKEND_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || "https://52.90.130.245:4000";
+// In production (Vercel), use relative URLs — vercel.json rewrites proxy /api/* to EC2.
+// In local dev, fall back to direct EC2 URL.
+const BACKEND_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http://52.90.130.245:4000");
 
 // Helper to get auth headers
 const getHeaders = () => {
@@ -42,6 +44,15 @@ export const api = {
   getMe: async () => {
     const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
       headers: getHeaders(),
+    });
+    return res.json();
+  },
+
+  updateProfile: async (data: any) => {
+    const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
     });
     return res.json();
   },

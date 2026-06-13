@@ -230,10 +230,11 @@ export default function Dashboard({
     // Socket.IO real-time connection
     let socket: any = null;
     try {
-      const BACKEND_URL = (import.meta as any).env?.VITE_API_URL || (import.meta as any).env?.VITE_BACKEND_URL || "https://52.90.130.245:4000";
-      socket = socketIO(`${BACKEND_URL}/telemetry`, {
+      // Socket.IO needs a direct connection to the backend (can't go through Vercel rewrites)
+      const SOCKET_URL = (import.meta as any).env?.VITE_SOCKET_URL || (import.meta as any).env?.VITE_API_URL || "http://52.90.130.245:4000";
+      socket = socketIO(`${SOCKET_URL}/telemetry`, {
         transports: ["websocket", "polling"],
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 3,
       });
 
       socket.on("connect", () => {
