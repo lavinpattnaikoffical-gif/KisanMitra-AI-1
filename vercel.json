@@ -7,6 +7,14 @@
     {
       "source": "/health",
       "destination": "http://52.90.130.245:4000/health"
+    },
+    {
+      "source": "/socket.io/:path*",
+      "destination": "http://52.90.130.245:4000/socket.io/:path*"
+    },
+    {
+      "source": "/telemetry/:path*",
+      "destination": "http://52.90.130.245:4000/telemetry/:path*"
     }
   ]
 }

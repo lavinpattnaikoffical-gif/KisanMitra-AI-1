@@ -109,6 +109,7 @@ model User {
   role            UserRole        @default(FARMER)
   state           String          @default("")
   district        String          @default("")
+  pincode         String          @default("")
   language        String          @default("English")
   cropType        String          @default("")
   farmSize        Float           @default(0)

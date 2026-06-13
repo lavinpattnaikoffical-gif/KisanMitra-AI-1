@@ -1,7 +1,7 @@
 // src/utils/api.ts
 // In production (Vercel), use relative URLs — vercel.json rewrites proxy /api/* to EC2.
 // In local dev, fall back to direct EC2 URL.
-const BACKEND_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http://52.90.130.245:4000");
+const BACKEND_URL = import.meta.env.PROD ? "" : (import.meta.env.VITE_API_URL || "http://52.90.130.245:4000");
 
 // Helper to get auth headers
 const getHeaders = () => {

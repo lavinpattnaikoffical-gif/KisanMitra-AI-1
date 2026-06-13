@@ -313,6 +313,8 @@ export default function App() {
   const handleUpdateProfile = (updatedProfile: UserProfile) => {
     setProfile(updatedProfile);
     localStorage.setItem("kisan_profile", JSON.stringify(updatedProfile));
+    setLiveLocation({ district: updatedProfile.district, state: updatedProfile.state });
+    api.updateProfile(updatedProfile).catch((err) => console.warn("Failed to sync profile update:", err));
   };
 
   const handleResetData = () => {

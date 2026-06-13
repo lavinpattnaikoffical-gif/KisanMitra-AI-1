@@ -113,6 +113,14 @@ export function setupTelemetrySocket(io: SocketIOServer) {
 export function startOfflineChecker(io: SocketIOServer, intervalMs = 30_000) {
   const timer = setInterval(async () => {
     try {
+      // Ensure database connection is alive (handles Neon cold-starts gracefully)
+      try {
+        await prisma.$connect();
+      } catch (connErr) {
+        // Database temporarily unreachable (Neon cold-start) — skip this cycle
+        return;
+      }
+
       const threshold = new Date(Date.now() - DEVICE_OFFLINE_THRESHOLD_MS);
 
       // Find devices that were ONLINE but haven't been seen recently

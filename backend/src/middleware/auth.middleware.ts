@@ -29,6 +29,7 @@ export async function authMiddleware(
         role: true,
         state: true,
         district: true,
+        pincode: true,
         language: true,
         cropType: true,
         farmSize: true,

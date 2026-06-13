@@ -230,10 +230,11 @@ export default function Dashboard({
     // Socket.IO real-time connection
     let socket: any = null;
     try {
-      // Socket.IO needs a direct connection to the backend (can't go through Vercel rewrites)
-      const SOCKET_URL = (import.meta as any).env?.VITE_SOCKET_URL || (import.meta as any).env?.VITE_API_URL || "http://52.90.130.245:4000";
+      // In production, connect Socket.IO through Vercel (polling mode).
+      // In dev, connect directly to EC2.
+      const SOCKET_URL = (import.meta as any).env?.PROD ? "" : "http://52.90.130.245:4000";
       socket = socketIO(`${SOCKET_URL}/telemetry`, {
-        transports: ["websocket", "polling"],
+        transports: ["polling"],  // Use polling through Vercel proxy (WebSocket can't go through rewrites)
         reconnectionAttempts: 3,
       });
 
