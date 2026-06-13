@@ -4,11 +4,28 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import { Phone, CheckCircle, Shield, Compass, Sprout, Landmark, Globe } from "lucide-react";
+import { Phone, CheckCircle, Shield, Sprout, Landmark, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile } from "../types";
 import { TRANSLATIONS, LANGUAGES, LanguageCode } from "../translations";
 import { api } from "../utils/api";
+
+// ── Complete list of Indian States & Union Territories ──────────────
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+  "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  // Union Territories
+  "Andaman and Nicobar Islands", "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+  "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
+
+// ── Predefined crop options (with "Other" at the end) ──────────────
+const CROP_OPTIONS = ["Cotton", "Tomato", "Wheat", "Soybean", "Sugarcane", "Onion", "Other"];
 
 interface LoginOnboardingProps {
   onComplete: (profile: UserProfile) => void;
@@ -40,10 +57,11 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
   
   // Onboarding parameters
   const [crop, setCrop] = useState("Cotton");
+  const [customCrop, setCustomCrop] = useState(""); // For "Other" option
   const [farmSize, setFarmSize] = useState("2.5");
   const [farmUnit, setFarmUnit] = useState<"Acres" | "Bigha" | "Hectares">("Acres");
-  const [farmState, setFarmState] = useState("Maharashtra");
-  const [district, setDistrict] = useState("Nashik");
+  const [farmState, setFarmState] = useState("");
+  const [district, setDistrict] = useState("");
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -114,10 +132,17 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
       setError(selectedLanguage === "Hindi" ? "कृपया अपना नाम दर्ज करें!" : "Please enter your name!");
       return;
     }
+    if (!farmState.trim()) {
+      setError(selectedLanguage === "Hindi" ? "कृपया अपना राज्य चुनें!" : "Please select your state!");
+      return;
+    }
     if (!district.trim()) {
       setError(selectedLanguage === "Hindi" ? "कृपया अपना जिला दर्ज करें!" : "Please enter your district name!");
       return;
     }
+
+    // Resolve the effective crop name (use custom value for "Other")
+    const effectiveCrop = crop === "Other" ? (customCrop.trim() || "Other") : crop;
     
     try {
       setLoading(true);
@@ -127,7 +152,7 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
         name,
         state: farmState,
         district,
-        cropType: crop,
+        cropType: effectiveCrop,
         farmSize: parseFloat(farmSize) || 2.5,
         farmSizeUnit: farmUnit.toUpperCase() as "ACRES" | "BIGHA" | "HECTARES",
       });
@@ -234,26 +259,13 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                 <button
                   id="send-otp-btn"
                   type="submit"
-                  className="w-full h-14 bg-content-primary hover:opacity-90 text-surface-base font-bold text-body-md rounded-2xl transition-opacity shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={loading}
+                  className="w-full h-14 bg-content-primary hover:opacity-90 text-surface-base font-bold text-body-md rounded-2xl transition-opacity shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   <Shield size={18} />
-                  {t.sendOTP}
+                  {loading ? "Sending..." : t.sendOTP}
                 </button>
               </form>
-
-              <div className="relative my-6 flex items-center justify-center">
-                <span className="absolute w-full border-t border-border-subtle" />
-                <span className="relative bg-surface-base px-3 text-micro text-content-muted font-bold uppercase tracking-widest">OR</span>
-              </div>
-
-              <button
-                id="google-signin"
-                onClick={() => setStep("setup")}
-                className="w-full h-14 bg-surface-elevated text-content-primary hover:bg-border-subtle font-bold rounded-2xl transition-all duration-fast text-body-sm flex items-center justify-center gap-2 cursor-pointer border border-border-subtle"
-              >
-                <Compass size={18} />
-                {t.continueGoogle}
-              </button>
             </motion.div>
           )}
 
@@ -312,9 +324,10 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                 <button
                   id="confirm-otp-btn"
                   type="submit"
-                  className="w-full h-14 bg-content-primary hover:opacity-90 text-surface-base text-body-md font-bold rounded-2xl transition-opacity shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={loading}
+                  className="w-full h-14 bg-content-primary hover:opacity-90 text-surface-base text-body-md font-bold rounded-2xl transition-opacity shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                 >
-                  {t.confirmBtn}
+                  {loading ? "Verifying..." : t.confirmBtn}
                 </button>
 
                 <div className="text-center">
@@ -329,6 +342,8 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                       onClick={() => {
                         setTimer(30);
                         setError("");
+                        // Re-send OTP
+                        api.sendOtp(phone.replace(/\D/g, "")).catch(() => {});
                       }}
                       className="text-body-sm font-bold text-content-primary hover:text-signal-success transition-colors duration-fast underline decoration-border-strong underline-offset-4"
                     >
@@ -371,23 +386,21 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                   />
                 </div>
 
-                {/* Crop Option */}
+                {/* Crop Option — with "Other" custom text field */}
                 <div className="space-y-3">
                   <label className="text-caption font-bold text-content-secondary uppercase tracking-wider select-none block">
                     {t.onbCrop}
                   </label>
                   <div className="grid grid-cols-3 gap-3">
-                    {["Cotton", "Tomato", "Wheat", "Soybean", "Sugarcane", "Onion"].map((cOption) => (
+                    {CROP_OPTIONS.map((cOption) => (
                       <button
                         key={cOption}
                         type="button"
                         onClick={() => {
                           setCrop(cOption);
-                          // Suggest district by default to save farmers effort
-                          if (cOption === "Cotton") setDistrict("Nashik");
-                          else if (cOption === "Wheat") setDistrict("Amritsar");
-                          else if (cOption === "Soybean") setDistrict("Indore");
-                          else if (cOption === "Sugarcane") setDistrict("Mandya");
+                          if (cOption !== "Other") {
+                            setCustomCrop("");
+                          }
                         }}
                         className={`py-3.5 rounded-2xl border-[1.5px] text-body-sm font-bold transition-all duration-fast ${
                           crop === cOption
@@ -399,6 +412,28 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                       </button>
                     ))}
                   </div>
+                  {/* Custom text input when "Other" is selected */}
+                  <AnimatePresence>
+                    {crop === "Other" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <input
+                          id="custom-crop-input"
+                          type="text"
+                          placeholder="e.g. Dragon Fruit, Banana, Turmeric..."
+                          value={customCrop}
+                          onChange={(e) => setCustomCrop(e.target.value)}
+                          className="w-full h-12 bg-surface-elevated border border-signal-success/40 rounded-2xl px-4 text-body-sm font-bold text-content-primary focus:outline-none focus:ring-2 focus:ring-signal-success/30 focus:border-signal-success transition-colors placeholder-content-muted mt-2"
+                          autoFocus
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Farm Size */}
@@ -434,7 +469,7 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                   </div>
                 </div>
 
-                {/* State / Location */}
+                {/* State / Location — Full list of Indian states & UTs */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-caption font-bold text-content-secondary uppercase tracking-wider block" htmlFor="farm-state-select">
@@ -444,20 +479,14 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                       id="farm-state-select"
                       value={farmState}
                       onChange={(e) => {
-                        const s = e.target.value;
-                        setFarmState(s);
-                        // Sensible defaults for states
-                        if (s === "Maharashtra") setDistrict("Nashik");
-                        else if (s === "Punjab") setDistrict("Amritsar");
-                        else if (s === "Gujarat") setDistrict("Gondal");
-                        else if (s === "Karnataka") setDistrict("Mandya");
+                        setFarmState(e.target.value);
                       }}
                       className="w-full h-14 bg-surface-elevated border border-border-subtle rounded-2xl px-4 text-body-md font-bold text-content-primary focus:outline-none focus:ring-2 focus:ring-signal-success/30 focus:border-signal-success transition-colors appearance-none"
                     >
-                      <option value="Maharashtra">Maharashtra</option>
-                      <option value="Punjab">Punjab</option>
-                      <option value="Gujarat">Gujarat</option>
-                      <option value="Karnataka">Karnataka</option>
+                      <option value="">-- Select State --</option>
+                      {INDIAN_STATES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -480,10 +509,11 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                 <button
                   id="complete-onboard-btn"
                   onClick={handleCompleteSetup}
-                  className="w-full h-14 bg-content-primary hover:opacity-90 text-surface-base text-body-md font-bold rounded-2xl transition-opacity shadow-lg flex items-center justify-center gap-2 mt-6 cursor-pointer"
+                  disabled={loading}
+                  className="w-full h-14 bg-content-primary hover:opacity-90 text-surface-base text-body-md font-bold rounded-2xl transition-opacity shadow-lg flex items-center justify-center gap-2 mt-6 cursor-pointer disabled:opacity-60"
                 >
                   <CheckCircle size={20} />
-                  {t.completeOnb}
+                  {loading ? "Setting up..." : t.completeOnb}
                 </button>
               </div>
             </motion.div>

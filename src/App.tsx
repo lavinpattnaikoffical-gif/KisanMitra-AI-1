@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   Sprout, 
   Home, 
@@ -22,13 +22,14 @@ import {
   AlertTriangle,
   ChevronRight,
   Layers,
-  Radio
+  Radio,
+  Loader2
 } from "lucide-react";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 
 import { UserProfile, MetricItem, InboxAlert, MarketProduct, FarmActivityLog, ScanRecord, ChatMessage } from "./types";
 import { TRANSLATIONS, LanguageCode } from "./translations";
-import { api } from "./utils/api";
+import { api, setOnAuthExpired } from "./utils/api";
 
 // Components
 import LivingSurface from "./components/LivingSurface";
@@ -64,6 +65,7 @@ const INITIAL_ALERTS: InboxAlert[] = [
 
 export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [authLoading, setAuthLoading] = useState(true); // true until we verify token or determine no token exists
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>("English");
   const [currentTab, setCurrentTab] = useState<"dashboard" | "zones" | "devices" | "market" | "ai" | "settings">("dashboard");
   const [darkMode, setDarkMode] = useState(false);
@@ -96,130 +98,152 @@ export default function App() {
   const [zones, setZones] = useState<ZoneData[]>([]);
   const [farmDevices, setFarmDevices] = useState<DeviceData[]>([]);
 
-  // Load from local storage and backend
-  useEffect(() => {
-    const initApp = async () => {
-      try {
-        const token = localStorage.getItem("kisan_token");
-        if (token) {
-          // 1. Fetch user profile
-          const res = await api.getMe();
-          
-          if (res.success) {
-            const parsed = res.data;
-            setProfile(parsed);
-            setSelectedLanguage(parsed.language || "English");
-            localStorage.setItem("kisan_profile", JSON.stringify(parsed));
+  /**
+   * Fetch all farm data (zones, devices, products, logs) for the authenticated user.
+   * This is called after initial auth verification AND after login/registration completes.
+   */
+  const loadUserData = useCallback(async () => {
+    let fetchedZones: ZoneData[] = [];
+    let fetchedDevices: DeviceData[] = [];
 
-            // 2. Fetch farms + zones + devices from backend
-            try {
-              const farmsRes = await api.getFarms();
-              if (farmsRes.success && Array.isArray(farmsRes.data) && farmsRes.data.length > 0) {
-                const allZones: ZoneData[] = [];
-                const allDevices: DeviceData[] = [];
+    // 1. Fetch farms + zones + devices from backend
+    try {
+      const farmsRes = await api.getFarms();
+      if (farmsRes.success && Array.isArray(farmsRes.data) && farmsRes.data.length > 0) {
+        for (const farm of farmsRes.data) {
+          try {
+            const farmDetail = await api.getFarm(farm.id);
+            if (farmDetail.success && farmDetail.data?.zones) {
+              for (const z of farmDetail.data.zones) {
+                fetchedZones.push({
+                  id: z.id,
+                  name: z.name,
+                  crop: z.cropType || "Unknown",
+                  area: `${z.areaSize || 0} Acres`,
+                  health: 100,
+                  status: "healthy",
+                  metrics: { moisture: "--", temp: "--", weather: "--" },
+                  connectivity: false,
+                });
 
-                // For each farm, get full details with zones and devices
-                for (const farm of farmsRes.data) {
-                  try {
-                    const farmDetail = await api.getFarm(farm.id);
-                    if (farmDetail.success && farmDetail.data?.zones) {
-                      for (const z of farmDetail.data.zones) {
-                        allZones.push({
-                          id: z.id,
-                          name: z.name,
-                          crop: z.cropType || "Unknown",
-                          area: `${z.areaSize || 0} Acres`,
-                          health: 100,
-                          status: "healthy",
-                          metrics: { moisture: "--", temp: "--", weather: "--" },
-                          connectivity: false,
-                        });
-
-                        // Get devices for this zone
-                        if (z.devices && Array.isArray(z.devices)) {
-                          for (const d of z.devices) {
-                            allDevices.push({
-                              id: d.deviceId || d.id,
-                              dbId: d.id,
-                              type: (d.type === "SOIL" || d.type === "WEATHER" || d.type === "NPK") ? "SENSOR" : d.type === "PUMP" ? "PUMP" : "RELAY",
-                              zone: z.name,
-                              zoneId: z.id,
-                              status: d.status === "ONLINE" ? "online" : d.status === "OFFLINE" ? "offline" : "provisioned",
-                              lastSeen: d.lastSeen || new Date().toISOString(),
-                              battery: 100,
-                              firmware: "1.0.0",
-                              secret: "",
-                            });
-                          }
-                        }
-                      }
-                    }
-                  } catch (err) {
-                    console.warn(`Failed to fetch farm ${farm.id} details:`, err);
+                if (z.devices && Array.isArray(z.devices)) {
+                  for (const d of z.devices) {
+                    fetchedDevices.push({
+                      id: d.deviceId || d.id,
+                      dbId: d.id,
+                      type: (d.type === "SOIL" || d.type === "WEATHER" || d.type === "NPK") ? "SENSOR" : d.type === "PUMP" ? "PUMP" : "RELAY",
+                      zone: z.name,
+                      zoneId: z.id,
+                      status: d.status === "ONLINE" ? "online" : d.status === "OFFLINE" ? "offline" : "provisioned",
+                      lastSeen: d.lastSeen || new Date().toISOString(),
+                      battery: 100,
+                      firmware: "1.0.0",
+                      secret: "",
+                    });
                   }
                 }
-
-                if (allZones.length > 0) {
-                  setZones(allZones);
-                  localStorage.setItem("kisan_zones", JSON.stringify(allZones));
-                }
-                if (allDevices.length > 0) {
-                  setFarmDevices(allDevices);
-                  localStorage.setItem("kisan_devices", JSON.stringify(allDevices));
-                }
               }
-            } catch (err) {
-              console.warn("Failed to fetch farms/zones/devices from backend:", err);
             }
-
-            // 3. Fetch other data in parallel
-            const [prodRes, myProdRes, logsRes] = await Promise.all([
-              api.getProducts().catch(() => null),
-              api.getMyListings().catch(() => null),
-              api.getFarmActivityLogs().catch(() => null)
-            ]);
-            
-            if (prodRes && prodRes.success) setProducts(prodRes.data);
-            if (myProdRes && myProdRes.success) setListings(myProdRes.data);
-            if (logsRes && logsRes.success) setLogs(logsRes.data);
-          } else {
-            localStorage.removeItem("kisan_token");
-            localStorage.removeItem("kisan_profile");
-          }
-        } else {
-          // Fallback to local profile if token is missing
-          const savedProfile = localStorage.getItem("kisan_profile");
-          if (savedProfile) {
-            const parsed = JSON.parse(savedProfile);
-            setProfile(parsed);
-            setSelectedLanguage(parsed.language || "English");
+          } catch (err) {
+            console.warn(`Failed to fetch farm ${farm.id} details:`, err);
           }
         }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch farms/zones/devices from backend:", err);
+    }
+
+    // Set zones and devices from backend (or empty if nothing found)
+    if (fetchedZones.length > 0) {
+      setZones(fetchedZones);
+      localStorage.setItem("kisan_zones", JSON.stringify(fetchedZones));
+    } else {
+      // Fallback to localStorage cache only if backend returned nothing
+      const savedZones = localStorage.getItem("kisan_zones");
+      if (savedZones) {
+        try { setZones(JSON.parse(savedZones)); } catch {}
+      }
+    }
+
+    if (fetchedDevices.length > 0) {
+      setFarmDevices(fetchedDevices);
+      localStorage.setItem("kisan_devices", JSON.stringify(fetchedDevices));
+    } else {
+      const savedDevices = localStorage.getItem("kisan_devices");
+      if (savedDevices) {
+        try { setFarmDevices(JSON.parse(savedDevices)); } catch {}
+      }
+    }
+
+    // 2. Fetch other data in parallel
+    const [prodRes, myProdRes, logsRes] = await Promise.all([
+      api.getProducts().catch(() => null),
+      api.getMyListings().catch(() => null),
+      api.getFarmActivityLogs().catch(() => null)
+    ]);
+    
+    if (prodRes && prodRes.success) setProducts(prodRes.data);
+    if (myProdRes && myProdRes.success) setListings(myProdRes.data);
+    if (logsRes && logsRes.success) setLogs(logsRes.data);
+
+    // Load cached scans (no backend endpoint for these yet)
+    const savedScans = localStorage.getItem("kisan_scans");
+    if (savedScans) {
+      try { setScans(JSON.parse(savedScans)); } catch {}
+    }
+  }, []);
+
+  // Subscribe to auth expiry events from api.ts (e.g. any 401 response)
+  useEffect(() => {
+    setOnAuthExpired(() => {
+      setProfile(null);
+      setAuthLoading(false);
+      setCurrentTab("dashboard");
+      setZones([]);
+      setFarmDevices([]);
+    });
+  }, []);
+
+  // On mount: verify existing token against backend, or show login
+  useEffect(() => {
+    const initApp = async () => {
+      const token = localStorage.getItem("kisan_token");
+      if (!token) {
+        // No token → user must log in. Do NOT fall back to localStorage profile.
+        setAuthLoading(false);
+        return;
+      }
+
+      try {
+        // Verify token is still valid by hitting the protected /me endpoint
+        const res = await api.getMe();
         
-        // Load cached local data as fallback (will be overwritten by backend data above)
-        const savedScans = localStorage.getItem("kisan_scans");
-        if (savedScans) setScans(JSON.parse(savedScans));
+        if (res.success && res.data) {
+          const userData = res.data;
+          setProfile(userData);
+          setSelectedLanguage(userData.language || "English");
+          localStorage.setItem("kisan_profile", JSON.stringify(userData));
 
-        // Only load from localStorage if backend didn't provide them
-        if (zones.length === 0) {
-          const savedZones = localStorage.getItem("kisan_zones");
-          if (savedZones) setZones(JSON.parse(savedZones));
-        }
-        if (farmDevices.length === 0) {
-          const savedDevices = localStorage.getItem("kisan_devices");
-          if (savedDevices) setFarmDevices(JSON.parse(savedDevices));
+          // Token is valid — now load all farm data
+          await loadUserData();
+        } else {
+          // Token invalid or expired — force re-login
+          localStorage.removeItem("kisan_token");
+          localStorage.removeItem("kisan_profile");
+          setProfile(null);
         }
       } catch (err) {
-        console.error("Failed to initialize app data", err);
-        // Last resort: try localStorage
-        const savedZones = localStorage.getItem("kisan_zones");
-        if (savedZones) setZones(JSON.parse(savedZones));
-        const savedDevices = localStorage.getItem("kisan_devices");
-        if (savedDevices) setFarmDevices(JSON.parse(savedDevices));
+        console.error("Failed to verify auth token", err);
+        // Network error — clear auth state to force re-login
+        localStorage.removeItem("kisan_token");
+        localStorage.removeItem("kisan_profile");
+        setProfile(null);
+      } finally {
+        setAuthLoading(false);
       }
     };
     initApp();
-  }, []);
+  }, [loadUserData]);
 
   // Update browser classes on dark mode toggle
   useEffect(() => {
@@ -279,18 +303,21 @@ export default function App() {
     }
   };
 
-  const handleCompleteOnboarding = (newProfile: UserProfile) => {
+  const handleCompleteOnboarding = async (newProfile: UserProfile) => {
     setProfile(newProfile);
     setSelectedLanguage(newProfile.language as LanguageCode);
     localStorage.setItem("kisan_profile", JSON.stringify(newProfile));
     
+    // Load all user data from backend (farms, zones, devices, products, etc.)
+    await loadUserData();
+
     // Add warm welcome advisor message on first launch
     const welcomeMsg: ChatMessage = {
       id: `welcome-${Date.now()}`,
       sender: "bot",
       text: newProfile.language === "Hindi" 
-        ? `नमस्ते राजेश जी! RAMU में आपका स्वागत है। आपके ${newProfile.cropType} के खेत (क्षेत्र: ${newProfile.farmSize} ${newProfile.farmSizeUnit}) के लिए मैंने सभी कृषि मानकों को अनुकूलित कर दिया है। मिट्टी की नमी की जांच के लिए आप 'मुख्य पेज' और फसल सुरक्षा समीक्षा के लिए 'बीमारी स्कैनर' का उपयोग कर सकते हैं।`
-        : `Namaste Rajesh! Welcome to RAMU Agricultural OS. I have successfully customized your command center matching your ${newProfile.cropType} cultivation (${newProfile.farmSize} ${newProfile.farmSizeUnit}). Reach out if you need intelligence or action recommendations!`,
+        ? `नमस्ते ${newProfile.name} जी! RAMU में आपका स्वागत है। आपके ${newProfile.cropType || "फसल"} के खेत (क्षेत्र: ${newProfile.farmSize || 0} ${newProfile.farmSizeUnit || "Acres"}) के लिए मैंने सभी कृषि मानकों को अनुकूलित कर दिया है। मिट्टी की नमी की जांच के लिए आप 'मुख्य पेज' और फसल सुरक्षा समीक्षा के लिए 'बीमारी स्कैनर' का उपयोग कर सकते हैं।`
+        : `Namaste ${newProfile.name}! Welcome to RAMU Agricultural OS. I have successfully customized your command center matching your ${newProfile.cropType || "crop"} cultivation (${newProfile.farmSize || 0} ${newProfile.farmSizeUnit || "Acres"}). Reach out if you need intelligence or action recommendations!`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     };
     setChatHistory([welcomeMsg]);
@@ -310,15 +337,30 @@ export default function App() {
     setAlerts((prev) => prev.filter((a) => a.actionKey !== "triggerIrr"));
   };
 
-  const handleUpdateProfile = (updatedProfile: UserProfile) => {
+  const handleUpdateProfile = async (updatedProfile: UserProfile) => {
+    // Optimistically update UI
     setProfile(updatedProfile);
     localStorage.setItem("kisan_profile", JSON.stringify(updatedProfile));
     setLiveLocation({ district: updatedProfile.district, state: updatedProfile.state });
-    api.updateProfile(updatedProfile).catch((err) => console.warn("Failed to sync profile update:", err));
+
+    // Persist to backend (awaited so Settings can show success/error)
+    const res = await api.updateProfile(updatedProfile);
+    if (!res.success) {
+      console.warn("Failed to sync profile update:", res.message);
+    }
+    return res;
   };
 
   const handleResetData = () => {
-    localStorage.clear();
+    // Clear all auth and cached data
+    localStorage.removeItem("kisan_token");
+    localStorage.removeItem("kisan_profile");
+    localStorage.removeItem("kisan_zones");
+    localStorage.removeItem("kisan_devices");
+    localStorage.removeItem("kisan_scans");
+    localStorage.removeItem("kisan_logs");
+    localStorage.removeItem("kisan_listings");
+    localStorage.removeItem("kisan_chat_history");
     setProfile(null);
     setCurrentTab("dashboard");
     setScans([]);
@@ -399,6 +441,21 @@ export default function App() {
 
   // Helper dictionary keys
   const t = TRANSLATIONS[selectedLanguage];
+
+  // Show a loading spinner while verifying the auth token
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-surface-base flex flex-col items-center justify-center gap-4 text-content-primary font-sans">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+        >
+          <Loader2 size={36} className="text-signal-success" />
+        </motion.div>
+        <p className="text-body-md font-medium text-content-secondary">Verifying session...</p>
+      </div>
+    );
+  }
 
   if (!profile) {
     return (

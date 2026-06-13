@@ -19,7 +19,7 @@ import {
   HelpCircle,
   AlertTriangle
 } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { UserProfile } from "../types";
 import { TRANSLATIONS, LanguageCode, LANGUAGES } from "../translations";
 
@@ -27,7 +27,7 @@ interface SettingsProps {
   profile: UserProfile;
   selectedLanguage: LanguageCode;
   setLanguage: (lang: LanguageCode) => void;
-  onUpdateProfile: (profile: UserProfile) => void;
+  onUpdateProfile: (profile: UserProfile) => Promise<any>;
   onResetData: () => void;
 }
 
@@ -42,28 +42,39 @@ export default function Settings({
 
   const [name, setName] = useState(profile.name);
   const [phone, setPhone] = useState(profile.phone);
-  const [crop, setCrop] = useState(profile.cropType);
-  const [size, setSize] = useState(profile.farmSize.toString());
-  const [farmUnit, setFarmUnit] = useState(profile.farmSizeUnit);
+  const [size, setSize] = useState(profile.farmSize?.toString() || "0");
+  const [farmUnit, setFarmUnit] = useState(profile.farmSizeUnit || "Acres");
   const [farmState, setFarmState] = useState(profile.state);
   const [district, setDistrict] = useState(profile.district);
   const [pincode, setPincode] = useState(profile.pincode || "");
+
+  // Crop state — detect if saved crop is a custom "Other" value
+  const PREDEFINED_CROPS = ["Cotton", "Tomato", "Wheat", "Paddy", "Onion", "Soybean", "Sugarcane"];
+  const savedCropIsPredefined = PREDEFINED_CROPS.includes(profile.cropType || "");
+  const [crop, setCrop] = useState(savedCropIsPredefined ? (profile.cropType || "Cotton") : "Other");
+  const [customCrop, setCustomCrop] = useState(savedCropIsPredefined ? "" : (profile.cropType || ""));
   
   // Settings configs
   const [cloudSync, setCloudSync] = useState(true);
   const [selectedModel, setSelectedModel] = useState("gemini-3.5-flash");
-  const [tempUnit, setTempUnit] = useState<"C" | "F">("C");
+  const [tempUnit, setTempUnit] = useState<"C" | "F">(profile.temperatureUnit || "C");
   
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim() || !district.trim()) return;
 
+    // Resolve the effective crop name (use custom value for "Other")
+    const effectiveCrop = crop === "Other" ? (customCrop.trim() || "Other") : crop;
+
     const updatedProfile: UserProfile = {
+      ...profile,
       name,
       phone,
-      cropType: crop,
+      cropType: effectiveCrop,
       farmSize: parseFloat(size) || 1.0,
       farmSizeUnit: farmUnit,
       state: farmState,
@@ -73,9 +84,28 @@ export default function Settings({
       temperatureUnit: tempUnit
     };
 
-    onUpdateProfile(updatedProfile);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
+    try {
+      const res = await onUpdateProfile(updatedProfile);
+      if (res && res.success) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        setSaveError(res?.message || "Failed to save profile to server. Changes saved locally.");
+        // Still show temporary success for local save
+        setSaveSuccess(true);
+        setTimeout(() => { setSaveSuccess(false); setSaveError(null); }, 4000);
+      }
+    } catch (err: any) {
+      setSaveError("Network error. Changes saved locally only.");
+      setSaveSuccess(true);
+      setTimeout(() => { setSaveSuccess(false); setSaveError(null); }, 4000);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Farmer record exporter
@@ -222,13 +252,16 @@ export default function Settings({
               <p className="text-micro text-content-muted">Used to fetch live weather data for your farm location.</p>
             </div>
 
-            {/* Profile Crop selection */}
+            {/* Profile Crop selection — with "Other" custom text field */}
             <div className="space-y-1.5">
               <label className="text-micro font-bold text-content-muted uppercase tracking-widest block" htmlFor="crop-select">Primary Cultivated Crop</label>
               <select
                 id="crop-select"
                 value={crop}
-                onChange={(e) => setCrop(e.target.value)}
+                onChange={(e) => {
+                  setCrop(e.target.value);
+                  if (e.target.value !== "Other") setCustomCrop("");
+                }}
                 className="w-full h-12 bg-surface-base text-body-sm font-medium border border-border-subtle rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-signal-success/30 focus:border-signal-success transition-colors shadow-sm"
               >
                 <option value="Cotton">Cotton / कपास</option>
@@ -237,7 +270,32 @@ export default function Settings({
                 <option value="Paddy">Rice Paddy / धान</option>
                 <option value="Onion">Onion / प्याज</option>
                 <option value="Soybean">Soybean / सोयाबीन</option>
+                <option value="Sugarcane">Sugarcane / गन्ना</option>
+                <option value="Other">Other (Custom)</option>
               </select>
+              {/* Custom text input when "Other" is selected */}
+              <AnimatePresence>
+                {crop === "Other" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <input
+                      id="custom-crop-input"
+                      type="text"
+                      placeholder="e.g. Dragon Fruit, Banana, Turmeric..."
+                      value={customCrop}
+                      onChange={(e) => setCustomCrop(e.target.value)}
+                      className="w-full h-12 bg-surface-base text-body-sm font-medium border border-signal-success/40 rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-signal-success/30 focus:border-signal-success transition-colors shadow-sm placeholder-content-muted mt-1.5"
+                      autoFocus
+                    />
+                    <p className="text-micro text-content-muted mt-1">Enter your custom crop name. It will be saved to your profile.</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -297,14 +355,21 @@ export default function Settings({
           <button
             id="save-changes-btn"
             type="submit"
-            className="w-full h-14 bg-content-primary hover:opacity-90 text-surface-base font-bold text-body-md rounded-2xl shadow-md transition-opacity cursor-pointer flex items-center justify-center gap-2 mt-4"
+            disabled={saving}
+            className="w-full h-14 bg-content-primary hover:opacity-90 text-surface-base font-bold text-body-md rounded-2xl shadow-md transition-opacity cursor-pointer flex items-center justify-center gap-2 mt-4 disabled:opacity-60"
           >
-            {t.saveChanges}
+            {saving ? "Saving..." : t.saveChanges}
           </button>
 
           {saveSuccess && (
             <div className="text-center p-3 rounded-xl bg-signal-success/10 border border-signal-success/20">
               <p className="text-caption text-signal-success font-bold tracking-wide">✓ {t.savedMsg}</p>
+            </div>
+          )}
+
+          {saveError && (
+            <div className="text-center p-3 rounded-xl bg-signal-warning/10 border border-signal-warning/20">
+              <p className="text-caption text-signal-warning font-bold tracking-wide">⚠️ {saveError}</p>
             </div>
           )}
         </form>

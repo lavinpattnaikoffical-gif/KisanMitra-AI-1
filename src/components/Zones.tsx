@@ -18,7 +18,6 @@ import {
   ArrowRight,
   CheckCircle2
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import { UserProfile } from "../types";
 import { ZoneData } from "./Dashboard";
 import ZoneDetails from "./ZoneDetails";
@@ -91,6 +90,7 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
   // New zone form state
   const [newName, setNewName] = useState("");
   const [newCrop, setNewCrop] = useState("Tomato");
+  const [customCrop, setCustomCrop] = useState(""); // For "Other" option
   const [newArea, setNewArea] = useState("");
 
   const handleCreateZone = async () => {
@@ -122,9 +122,10 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
       }
 
       // Step 2: Create zone under the farm via backend
+      const effectiveCrop = newCrop === "Other" ? (customCrop.trim() || "Other") : newCrop;
       const zoneRes = await api.createZone(farmId, {
         name: newName.trim(),
-        cropType: newCrop,
+        cropType: effectiveCrop,
         areaSize: parseFloat(newArea) || 0,
         areaUnit: "ACRES",
         irrigationType: "DRIP",
@@ -135,7 +136,7 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
         const zone: ZoneData = {
           id: zoneRes.data.id, // Real CUID from database!
           name: zoneRes.data.name,
-          crop: zoneRes.data.cropType || newCrop,
+          crop: zoneRes.data.cropType || effectiveCrop,
           area: `${newArea} Acres`,
           health: 100,
           status: "healthy",
@@ -145,6 +146,7 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
         onAddZone(zone);
         setNewName("");
         setNewCrop("Tomato");
+        setCustomCrop("");
         setNewArea("");
         setShowAddZone(false);
         setJustCreatedZone(zoneRes.data.name); // Show success + next step
@@ -154,10 +156,11 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
     } catch (err: any) {
       console.warn("Backend zone creation failed, creating locally:", err);
       // Fallback to local-only
+      const effectiveCropFallback = newCrop === "Other" ? (customCrop.trim() || "Other") : newCrop;
       const zone: ZoneData = {
         id: `zone-${Date.now()}`,
         name: newName.trim(),
-        crop: newCrop,
+        crop: effectiveCropFallback,
         area: `${newArea} Acres`,
         health: 100,
         status: "healthy",
@@ -168,6 +171,7 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
       setCreateError("⚠️ Created locally (backend unavailable). Devices won't link until online.");
       setNewName("");
       setNewCrop("Tomato");
+      setCustomCrop("");
       setNewArea("");
       setTimeout(() => setShowAddZone(false), 2000);
     } finally {
@@ -423,11 +427,35 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
                   <label className="text-body-sm font-bold text-content-secondary">Crop Type</label>
                   <select
                     value={newCrop}
-                    onChange={(e) => setNewCrop(e.target.value)}
+                    onChange={(e) => {
+                      setNewCrop(e.target.value);
+                      if (e.target.value !== "Other") setCustomCrop("");
+                    }}
                     className="w-full p-3 rounded-xl bg-surface-elevated border border-border-subtle text-content-primary focus:outline-none focus:border-signal-info"
                   >
                     {CROP_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
+                  {/* Custom text input when "Other" is selected */}
+                  <AnimatePresence>
+                    {newCrop === "Other" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <input
+                          type="text"
+                          placeholder="e.g. Dragon Fruit, Banana, Turmeric..."
+                          value={customCrop}
+                          onChange={(e) => setCustomCrop(e.target.value)}
+                          className="w-full p-3 rounded-xl bg-surface-elevated border border-signal-info/40 text-content-primary focus:outline-none focus:border-signal-info placeholder-content-muted mt-2"
+                          autoFocus
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="space-y-2">

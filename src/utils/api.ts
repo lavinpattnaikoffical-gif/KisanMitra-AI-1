@@ -3,6 +3,14 @@
 // In local dev, fall back to direct EC2 URL.
 const BACKEND_URL = import.meta.env.PROD ? "" : (import.meta.env.VITE_API_URL || "http://52.90.130.245:4000");
 
+// ── Auth expiry callback ──
+// App.tsx subscribes to this so it can redirect to login on 401
+let onAuthExpired: (() => void) | null = null;
+
+export function setOnAuthExpired(cb: () => void) {
+  onAuthExpired = cb;
+}
+
 // Helper to get auth headers
 const getHeaders = () => {
   const token = localStorage.getItem("kisan_token");
@@ -12,213 +20,246 @@ const getHeaders = () => {
   };
 };
 
+/**
+ * Centralized fetch wrapper. Handles:
+ * - JSON parsing
+ * - 401 detection → clear token, trigger logout callback
+ * - Network error wrapping
+ */
+async function apiFetch(url: string, options?: RequestInit): Promise<any> {
+  try {
+    const res = await fetch(url, options);
+
+    // If unauthorized, clear auth and trigger logout
+    if (res.status === 401) {
+      localStorage.removeItem("kisan_token");
+      localStorage.removeItem("kisan_profile");
+      if (onAuthExpired) onAuthExpired();
+      return { success: false, message: "Session expired. Please log in again." };
+    }
+
+    return await res.json();
+  } catch (err: any) {
+    console.error(`API fetch failed: ${url}`, err);
+    return { success: false, message: err.message || "Network error" };
+  }
+}
+
+/**
+ * Normalize profile fields before sending to backend.
+ * Converts farmSizeUnit casing (Acres → ACRES) and strips frontend-only fields.
+ */
+function normalizeProfileForBackend(data: any): any {
+  const payload: any = {};
+
+  if (data.name !== undefined) payload.name = data.name;
+  if (data.state !== undefined) payload.state = data.state;
+  if (data.district !== undefined) payload.district = data.district;
+  if (data.pincode !== undefined) payload.pincode = data.pincode;
+  if (data.language !== undefined) payload.language = data.language;
+  if (data.cropType !== undefined) payload.cropType = data.cropType;
+  if (data.farmSize !== undefined) payload.farmSize = typeof data.farmSize === "string" ? parseFloat(data.farmSize) || 0 : data.farmSize;
+
+  // Normalize farmSizeUnit to uppercase enum (Acres → ACRES)
+  if (data.farmSizeUnit !== undefined) {
+    payload.farmSizeUnit = data.farmSizeUnit.toUpperCase();
+  }
+
+  // Normalize temperatureUnit
+  if (data.temperatureUnit !== undefined) {
+    payload.temperatureUnit = data.temperatureUnit;
+  }
+
+  return payload;
+}
+
 export const api = {
   // ── Auth & OTP ──
   sendOtp: async (phone: string) => {
-    const res = await fetch(`${BACKEND_URL}/api/auth/send-otp`, {
+    return apiFetch(`${BACKEND_URL}/api/auth/send-otp`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({ phone }),
     });
-    return res.json();
   },
 
   verifyOtp: async (phone: string, otp: string) => {
-    const res = await fetch(`${BACKEND_URL}/api/auth/verify-otp`, {
+    return apiFetch(`${BACKEND_URL}/api/auth/verify-otp`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({ phone, otp }),
     });
-    return res.json();
   },
 
   registerOtp: async (userData: any) => {
-    const res = await fetch(`${BACKEND_URL}/api/auth/register-otp`, {
+    return apiFetch(`${BACKEND_URL}/api/auth/register-otp`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(userData),
     });
-    return res.json();
   },
 
   getMe: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
+    return apiFetch(`${BACKEND_URL}/api/auth/me`, {
       headers: getHeaders(),
     });
-    return res.json();
   },
 
   updateProfile: async (data: any) => {
-    const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
+    const normalized = normalizeProfileForBackend(data);
+    return apiFetch(`${BACKEND_URL}/api/auth/me`, {
       method: "PUT",
       headers: getHeaders(),
-      body: JSON.stringify(data),
+      body: JSON.stringify(normalized),
     });
-    return res.json();
   },
 
   // ── Farms ──
   getFarms: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/farms`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/farms`, { headers: getHeaders() });
   },
 
   createFarm: async (data: { name: string; location: string; totalArea: number; areaUnit: string }) => {
-    const res = await fetch(`${BACKEND_URL}/api/farms`, {
+    return apiFetch(`${BACKEND_URL}/api/farms`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
   },
 
   getFarm: async (farmId: string) => {
-    const res = await fetch(`${BACKEND_URL}/api/farms/${farmId}`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/farms/${farmId}`, { headers: getHeaders() });
   },
 
   // ── Zones ──
   getZones: async (farmId: string) => {
-    const res = await fetch(`${BACKEND_URL}/api/farms/${farmId}/zones`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/farms/${farmId}/zones`, { headers: getHeaders() });
   },
 
   createZone: async (farmId: string, data: any) => {
-    const res = await fetch(`${BACKEND_URL}/api/farms/${farmId}/zones`, {
+    return apiFetch(`${BACKEND_URL}/api/farms/${farmId}/zones`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
   },
 
   getZoneOverview: async (zoneId: string) => {
-    const res = await fetch(`${BACKEND_URL}/api/zones/${zoneId}/overview`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/zones/${zoneId}/overview`, { headers: getHeaders() });
   },
 
   // ── Devices ──
   createDevice: async (data: { zoneId: string; role: string; type: string; firmware?: string }) => {
-    const res = await fetch(`${BACKEND_URL}/api/devices`, {
+    return apiFetch(`${BACKEND_URL}/api/devices`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
   },
 
   getDevicesByZone: async (zoneId: string) => {
-    const res = await fetch(`${BACKEND_URL}/api/devices/zone/${zoneId}`, {
+    return apiFetch(`${BACKEND_URL}/api/devices/zone/${zoneId}`, {
       headers: getHeaders(),
     });
-    return res.json();
   },
 
   // ── Dashboard & Telemetry ──
   getDashboard: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/dashboard`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/dashboard`, { headers: getHeaders() });
   },
 
   getDashboardStats: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/dashboard`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/dashboard`, { headers: getHeaders() });
   },
 
   getZoneLatestTelemetry: async (zoneId: string) => {
-    const res = await fetch(`${BACKEND_URL}/api/telemetry/${zoneId}/latest`, {
+    return apiFetch(`${BACKEND_URL}/api/telemetry/${zoneId}/latest`, {
       headers: getHeaders(),
     });
-    return res.json();
   },
 
   sendTestTelemetry: async (deviceId: string, deviceSecret: string, data: any) => {
-    const res = await fetch(`${BACKEND_URL}/api/telemetry/ingest`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-device-id": deviceId,
-        "x-device-secret": deviceSecret,
-      },
-      body: JSON.stringify(data),
-    });
-    return res.json();
+    // Device telemetry uses device-level auth, not JWT — skip apiFetch 401 handling
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/telemetry/ingest`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-device-id": deviceId,
+          "x-device-secret": deviceSecret,
+        },
+        body: JSON.stringify(data),
+      });
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, message: err.message || "Network error" };
+    }
   },
 
   // ── Intelligence & AI ──
   chatAI: async (message: string, language: string = "English", history: Array<{role: string; text: string}> = []) => {
-    const res = await fetch(`${BACKEND_URL}/api/ai/chat`, {
+    return apiFetch(`${BACKEND_URL}/api/ai/chat`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({ message, language, history }),
     });
-    return res.json();
   },
 
   getAIRecommendation: async (zoneId: string) => {
-    const res = await fetch(`${BACKEND_URL}/api/ai/recommendation/${zoneId}`, {
+    return apiFetch(`${BACKEND_URL}/api/ai/recommendation/${zoneId}`, {
       method: "POST",
       headers: getHeaders(),
     });
-    return res.json();
   },
 
   evaluateZone: async (zoneId: string) => {
-    const res = await fetch(`${BACKEND_URL}/api/intelligence/evaluate-zone/${zoneId}`, {
+    return apiFetch(`${BACKEND_URL}/api/intelligence/evaluate-zone/${zoneId}`, {
       method: "POST",
       headers: getHeaders(),
     });
-    return res.json();
   },
 
   // ── Marketplace ──
   getProducts: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/products/`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/products/`, { headers: getHeaders() });
   },
 
   getMyListings: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/products/seller/mine`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/products/seller/mine`, { headers: getHeaders() });
   },
 
   createListing: async (productData: any) => {
-    const res = await fetch(`${BACKEND_URL}/api/products/`, {
+    return apiFetch(`${BACKEND_URL}/api/products/`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(productData)
     });
-    return res.json();
   },
 
   // ── IoT Dashboard (Legacy) ──
   getIotDashboard: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/iot/dashboard`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/iot/dashboard`, { headers: getHeaders() });
   },
 
   // ── Activity Logs ──
   getFarmActivityLogs: async () => {
-    const res = await fetch(`${BACKEND_URL}/api/updates/my`, { headers: getHeaders() });
-    return res.json();
+    return apiFetch(`${BACKEND_URL}/api/updates/my`, { headers: getHeaders() });
   },
 
   createFarmActivityLog: async (logData: any) => {
-    const res = await fetch(`${BACKEND_URL}/api/updates`, {
+    return apiFetch(`${BACKEND_URL}/api/updates`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(logData)
     });
-    return res.json();
   },
 
   // ── Disease Scans ──
   saveDiseaseScan: async (reportData: any) => {
-    const res = await fetch(`${BACKEND_URL}/api/disease/report`, {
+    return apiFetch(`${BACKEND_URL}/api/disease/report`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(reportData),
     });
-    return res.json();
   },
 };
