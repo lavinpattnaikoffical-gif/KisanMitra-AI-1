@@ -113,6 +113,9 @@ Our physical sensor nodes are being actively prototyped and tested. Below are ou
    npm start
    ```
 
+### ☁️ AWS Cloud Deployment
+For instructions on deploying the backend services to AWS, please refer to our dedicated **[AWS Deployment Guide](AWS_DEPLOYMENT.md)**.
+
 ---
 
 ## 🎯 Impact, Cost & Performance Metrics
