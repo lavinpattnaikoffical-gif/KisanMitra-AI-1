@@ -262,4 +262,54 @@ export const api = {
       body: JSON.stringify(reportData),
     });
   },
+
+  // ── Mandi Prices (Agmarknet / data.gov.in) ──
+  /**
+   * Fetch daily mandi prices for a crop.
+   * Falls back to mock data on the server side if live data isn't available.
+   */
+  mandiPrices: async (
+    crop: string,
+    state?: string,
+    district?: string
+  ): Promise<{
+    crop: string;
+    state: string | null;
+    district: string | null;
+    records: Array<{
+      state: string;
+      district: string;
+      market: string;
+      commodity: string;
+      variety: string;
+      grade: string;
+      arrivalDate: string;
+      minPrice: number;
+      maxPrice: number;
+      modalPrice: number;
+      fetchedAt: string;
+    }>;
+    lastUpdated: string;
+    exactMatch: boolean;
+    isStale: boolean;
+    source: "Agmarknet / data.gov.in" | "mock";
+    note?: string;
+    totalResults: number;
+  }> => {
+    const params = new URLSearchParams({ crop });
+    if (state) params.set("state", state);
+    if (district) params.set("district", district);
+    return apiFetch(`/api/mandi-prices?${params.toString()}`);
+  },
+
+  /**
+   * Fetch the full commodity list for autocomplete.
+   */
+  mandiCommodities: async (): Promise<{
+    commodities: string[];
+    updatedAt: string | null;
+    total: number;
+  }> => {
+    return apiFetch(`/api/mandi-prices/commodities`);
+  },
 };

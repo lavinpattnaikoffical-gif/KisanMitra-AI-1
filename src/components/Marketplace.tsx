@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   Store, 
   Tag, 
@@ -11,18 +11,17 @@ import {
   ShoppingBag, 
   CheckCircle, 
   Share2, 
-  ChevronRight, 
-  Sparkles, 
+  ChevronRight,
+  Sparkles,
   HelpCircle,
   TrendingUp,
   MapPin,
-  Flame,
-  Globe
+  Flame
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { UserProfile, MarketProduct, MandiRate } from "../types";
+import { UserProfile, MarketProduct } from "../types";
 import { TRANSLATIONS, LanguageCode } from "../translations";
-import { INDIAN_STATES, UNION_TERRITORIES } from "../utils/constants";
+import MandiRatesTab from "./mandi/MandiRatesTab";
 
 interface MarketplaceProps {
   profile: UserProfile;
@@ -44,9 +43,6 @@ export default function Marketplace({
   const t = TRANSLATIONS[selectedLanguage];
 
   const [activeSegment, setActiveSegment] = useState<"buy" | "sell" | "rates">("rates");
-  const [mandiState, setMandiState] = useState(profile.state);
-  const [mandiRates, setMandiRates] = useState<MandiRate[]>([]);
-  const [ratesLoading, setRatesLoading] = useState(false);
 
   // Cart system
   const [cart, setCart] = useState<{ product: MarketProduct; quantity: number }[]>([]);
@@ -59,29 +55,6 @@ export default function Marketplace({
   const [askingPrice, setAskingPrice] = useState("6500");
   const [selectedQuality, setSelectedQuality] = useState<"A" | "B" | "C">("A");
   const [listingSuccess, setListingSuccess] = useState(false);
-
-  // Fetch Mandi Rates Based on State Selection
-  const fetchRates = async (stateVal: string) => {
-    setRatesLoading(true);
-    try {
-      const response = await fetch(`/api/mandi-rates?state=${encodeURIComponent(stateVal)}`);
-      const body = await response.json();
-      setMandiRates(body.rates || []);
-    } catch (err) {
-      console.warn("Unable to get real rates:", err);
-      // fallback rates
-      setMandiRates([
-        { crop: "Cotton", price: 6850, prevPrice: 6710, unit: "Qtl", arrivals: "Medium", quality: "A", lastUpdated: "Today", aiSuggestedRange: { min: 6900, max: 7300 }, source: "Mandi" },
-        { crop: "Wheat", price: 2275, prevPrice: 2250, unit: "Qtl", arrivals: "High", quality: "A", lastUpdated: "Today", aiSuggestedRange: { min: 2310, max: 2400 }, source: "Mandi" },
-      ]);
-    } finally {
-      setRatesLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRates(mandiState);
-  }, [mandiState]);
 
   // Handle Cart Operations
   const addToCart = (product: MarketProduct) => {
@@ -119,7 +92,7 @@ export default function Marketplace({
       weight: parseFloat(commodityWeight),
       price: parseFloat(askingPrice),
       quality: selectedQuality,
-      location: `${profile.district}, ${mandiState}`,
+      location: `${profile.district}, ${profile.state}`,
       timestamp: "Just now",
       isSold: false
     };
@@ -136,9 +109,6 @@ export default function Marketplace({
       return acc + (actualPrice * item.quantity);
     }, 0);
   };
-
-  // Mandi Rate helper lookup
-  const cropPriceFactor = mandiRates.find(r => r.crop === selectedCrop);
 
   return (
     <div className="space-y-6 select-none font-sans relative">
@@ -167,7 +137,7 @@ export default function Marketplace({
         ))}
       </div>
 
-      {/* Segment 1 — Mandi rates list */}
+      {/* Segment 1 — Mandi rates (Agmarknet powered) */}
       <AnimatePresence mode="wait">
         {activeSegment === "rates" && (
           <motion.div
@@ -175,89 +145,8 @@ export default function Marketplace({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="space-y-4"
           >
-            {/* Rates State drop control */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 material-elevated border border-border-subtle rounded-3xl p-5 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Globe size={20} className="text-signal-success" />
-                <span className="text-body-sm font-bold text-content-primary">{t.selectState}:</span>
-                <select
-                  id="mandi-state-select"
-                  value={mandiState}
-                  onChange={(e) => setMandiState(e.target.value)}
-                  className="bg-surface-base text-body-sm font-bold border border-border-subtle rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-signal-success/30 shadow-inner"
-                >
-                  <option value="">-- Select State / UT --</option>
-                  <optgroup label="States">
-                    {INDIAN_STATES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Union Territories">
-                    {UNION_TERRITORIES.map((ut) => (
-                      <option key={ut} value={ut}>{ut}</option>
-                    ))}
-                  </optgroup>
-                </select>
-              </div>
-
-              <span className="text-micro font-bold text-content-muted uppercase tracking-widest hidden sm:block">Powered by Agmarknet portal sync</span>
-            </div>
-
-            {/* Rates Grid */}
-            {ratesLoading ? (
-              <div className="text-center py-16 material-elevated rounded-3xl border border-border-subtle shadow-sm">
-                <div className="w-10 h-10 border-4 border-content-primary border-t-transparent rounded-full animate-spin mx-auto pb-2" />
-                <p className="text-body-sm text-content-muted font-bold mt-4">Loading live market intelligence rates...</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {mandiRates.map((rate, idx) => {
-                  const priceDiff = rate.price - rate.prevPrice;
-                  const isUp = priceDiff >= 0;
-                  return (
-                    <div
-                      key={idx}
-                      className="material-elevated border border-border-subtle rounded-3xl p-6 shadow-sm flex justify-between gap-5 hover:border-border-strong transition-colors duration-normal"
-                    >
-                      <div className="space-y-4 flex-1">
-                        <div>
-                          <span className="text-micro font-bold text-signal-warning bg-signal-warning/10 px-2.5 py-1 rounded-md uppercase tracking-widest">{rate.arrivals}</span>
-                          <h4 className="text-body-lg font-bold text-content-primary mt-2">{rate.crop}</h4>
-                        </div>
-
-                        {/* Current Price and indicator */}
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-title font-bold font-mono text-content-primary tracking-tight">₹{rate.price}</span>
-                          <span className="text-caption font-semibold text-content-muted">per {rate.unit}</span>
-                          
-                          <span className={`text-body-sm font-bold flex items-center ml-2 ${isUp ? "text-signal-success" : "text-signal-critical"}`}>
-                            {isUp ? "▲" : "▼"} ₹{Math.abs(priceDiff)}
-                          </span>
-                        </div>
-
-                        <div className="bg-signal-success/5 p-4 rounded-2xl border border-signal-success/20 space-y-1">
-                          <span className="text-micro font-bold text-signal-success uppercase tracking-widest flex items-center gap-1.5">
-                            <Sparkles size={14} /> {t.suggestedAiPrice}
-                          </span>
-                          <p className="text-body-sm font-bold text-content-primary font-mono mt-1">₹{rate.aiSuggestedRange.min} - ₹{rate.aiSuggestedRange.max}</p>
-                          <p className="text-micro text-content-muted font-medium mt-1">Optimized for A-Grade moisture index</p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col justify-between items-end text-right">
-                        <div>
-                          <p className="text-micro text-content-muted font-bold tracking-wide">Mandi Grade</p>
-                          <p className="text-body-sm font-bold text-signal-success font-mono mt-0.5">{rate.quality}-Grade</p>
-                        </div>
-                        <span className="text-micro font-semibold text-content-muted mt-4 inline-block">eNAM Live</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <MandiRatesTab defaultState={profile.state} />
           </motion.div>
         )}
 
@@ -438,20 +327,7 @@ export default function Marketplace({
                   </div>
                 </div>
 
-                {/* AI pricing helper box */}
-                {cropPriceFactor && (
-                  <div className="bg-signal-success/5 p-4 rounded-2xl border border-signal-success/20 space-y-2 select-none">
-                    <div className="flex items-center gap-1.5 text-micro font-bold text-signal-success uppercase tracking-widest">
-                      <Sparkles size={14} /> Target suggestions
-                    </div>
-                    <p className="text-caption font-semibold text-content-muted">
-                      Current Mandi: <span className="font-bold text-content-primary font-mono">₹{cropPriceFactor.price}/qtl</span>
-                    </p>
-                    <p className="text-caption font-semibold text-content-muted">
-                      FPO AI target recommendation: <span className="font-bold text-signal-success font-mono">₹{cropPriceFactor.aiSuggestedRange.min} - ₹{cropPriceFactor.aiSuggestedRange.max}</span>
-                    </p>
-                  </div>
-                )}
+
 
                 <motion.button
                   whileHover={{ scale: 1.02 }}

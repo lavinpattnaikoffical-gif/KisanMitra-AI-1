@@ -3,6 +3,9 @@ import path from "path";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import cron from "node-cron";
+import mandiPricesRouter from "./src/routes/mandiPrices.routes.js";
+import { runIngestion } from "./src/services/mandiPriceIngestion.js";
 
 dotenv.config();
 
@@ -10,6 +13,11 @@ const app = express();
 const PORT = 3001;
 
 app.use(express.json({ limit: "20mb" }));
+
+// ── Mandi Price Routes (Agmarknet / data.gov.in) ──────────────────────────
+// New: /api/mandi-prices, /api/mandi-prices/commodities, /api/mandi-prices/status
+// Old /api/mandi-rates kept below for backward compatibility
+app.use("/api/mandi-prices", mandiPricesRouter);
 
 // Runtime AI provider config (can be changed from Settings UI)
 let aiProviderConfig = {
@@ -531,6 +539,26 @@ app.post("/api/analyze-crop", async (req, res) => {
     res.status(500).json({ error: "Failed to compile AI crop diagnostics." });
   }
 });
+
+// ── Mandi Price Ingestion — Scheduled Cron ────────────────────────────────
+// Runs twice daily: 6:00 AM IST (00:30 UTC) and 6:00 PM IST (12:30 UTC)
+// node-cron uses server local time; on EC2 set TZ=Asia/Kolkata in the env.
+// On Windows dev the cron still runs — useful for testing.
+cron.schedule("30 0,12 * * *", () => {
+  console.log("⏰ Cron triggered: running Mandi price ingestion...");
+  runIngestion().catch((err) =>
+    console.error("Cron ingestion error:", err)
+  );
+});
+
+// One-shot startup ingestion — fills cache immediately so there's no cold-start gap.
+// Fires 5 seconds after server start to not block the listen() call.
+setTimeout(() => {
+  console.log("🚀 Startup: triggering initial Mandi price ingestion...");
+  runIngestion().catch((err) =>
+    console.error("Startup ingestion error:", err)
+  );
+}, 5_000);
 
 // Configure Vite or Serve Static build inside Express
 async function setupServer() {

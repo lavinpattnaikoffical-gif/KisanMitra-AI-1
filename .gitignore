@@ -9,3 +9,5 @@ coverage/
 *.pem
 *.tar.gz
 deploy.sh
+# Mandi price cache files (local to each EC2 instance, never committed)
+tmp/
