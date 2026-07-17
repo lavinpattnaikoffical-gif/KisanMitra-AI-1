@@ -198,56 +198,121 @@ export default function Devices({ zones, devices, onAddDevice, onRemoveDevice }:
     }
   };
 
-  const esp32Template = generatedCreds ? `// KisanMitra AI - ESP32 Firmware
+  const esp32Template = generatedCreds ? `// KisanMitra_AI.ino
+// Production firmware template for ESP32
+// Update WiFi credentials and endpoint as needed.
+
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include <DHT.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <TinyGPS++.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 #define DEVICE_ID "${generatedCreds.id}"
 #define DEVICE_SECRET "${generatedCreds.secret}"
+
 #define WIFI_SSID "YOUR_WIFI_SSID"
 #define WIFI_PASS "YOUR_WIFI_PASS"
+
+const char* ENDPOINT = "http://52.90.130.245/api/telemetry/ingest";
 
 #define DHTPIN 4
 #define DHTTYPE DHT11
 #define SOIL_PIN 34
+#define PH_PIN 35
+#define ONE_WIRE_BUS 18
 
-DHT dht(DHTPIN, DHTTYPE);
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
 
-const char* endpoint = "http://52.90.130.245/api/telemetry/ingest";
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+DHT dht(DHTPIN,DHTTYPE);
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature soilSensor(&oneWire);
+TinyGPSPlus gps;
+HardwareSerial GPSSerial(2);
 
-void setup() {
-  Serial.begin(115200);
-  dht.begin();
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print("."); }
-  Serial.println("\\nWiFi Connected!");
+unsigned long lastSend=0;
+const unsigned long SEND_INTERVAL=10000;
+
+void connectWiFi(){
+  if(WiFi.status()==WL_CONNECTED) return;
+  WiFi.begin(WIFI_SSID,WIFI_PASS);
+  while(WiFi.status()!=WL_CONNECTED){
+    delay(500);
+  }
 }
 
-void loop() {
-  float humidity = dht.readHumidity();
-  float temperature = dht.readTemperature();
-  int soilRaw = analogRead(SOIL_PIN);
-  int moisture = constrain(map(soilRaw, 4095, 1500, 0, 100), 0, 100);
+void setup(){
+  Serial.begin(115200);
+  dht.begin();
+  soilSensor.begin();
+  GPSSerial.begin(9600,SERIAL_8N1,16,17);
+  display.begin(SSD1306_SWITCHCAPVCC,0x3C);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  connectWiFi();
+}
 
-  if (isnan(humidity) || isnan(temperature)) { delay(5000); return; }
+void loop(){
+  while(GPSSerial.available()) gps.encode(GPSSerial.read());
 
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    http.begin(endpoint);
-    http.addHeader("Content-Type", "application/json");
-    http.addHeader("x-device-id", DEVICE_ID);
-    http.addHeader("x-device-secret", DEVICE_SECRET);
+  if(millis()-lastSend<SEND_INTERVAL) return;
+  lastSend=millis();
 
-    String payload = "{\\"temperature\\":" + String(temperature) +
-      ",\\"humidity\\":" + String(humidity) +
-      ",\\"moisture\\":" + String(moisture) + "}";
+  connectWiFi();
 
-    int code = http.POST(payload);
-    Serial.println("HTTP " + String(code) + ": " + http.getString());
-    http.end();
-  }
-  delay(5000);
+  float airTemp=dht.readTemperature();
+  float humidity=dht.readHumidity();
+
+  soilSensor.requestTemperatures();
+  float soilTemp=soilSensor.getTempCByIndex(0);
+
+  int soilRaw=analogRead(SOIL_PIN);
+  int moisture=constrain(map(soilRaw,4095,1500,0,100),0,100);
+
+  int phRaw=analogRead(PH_PIN);
+  float voltage=phRaw*3.3/4095.0;
+  float ph=7+((2.5-voltage)/0.18);
+
+  double lat=gps.location.isValid()?gps.location.lat():0.0;
+  double lng=gps.location.isValid()?gps.location.lng():0.0;
+
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.printf("Air %.1fC\\nHum %.1f%%\\nSoil %d%%\\npH %.2f\\n",airTemp,humidity,moisture,ph);
+  display.display();
+
+  JsonDocument doc;
+  doc["temperature"]=airTemp;
+  doc["humidity"]=humidity;
+  doc["soilTemperature"]=soilTemp;
+  doc["moisture"]=moisture;
+  doc["ph"]=ph;
+  JsonObject g=doc["gps"].to<JsonObject>();
+  g["latitude"]=lat;
+  g["longitude"]=lng;
+  doc["timestamp"]=millis();
+
+  String payload;
+  serializeJson(doc,payload);
+
+  HTTPClient http;
+  http.begin(ENDPOINT);
+  http.addHeader("Content-Type","application/json");
+  http.addHeader("x-device-id",DEVICE_ID);
+  http.addHeader("x-device-secret",DEVICE_SECRET);
+
+  int code=http.POST(payload);
+  Serial.printf("HTTP %d\\n",code);
+  Serial.println(http.getString());
+  http.end();
 }
 ` : "";
 
