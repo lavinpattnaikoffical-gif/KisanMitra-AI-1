@@ -45,110 +45,57 @@ interface MandiResponse {
 }
 
 const DEMO_MANDI_DATA: PriceRecord[] = [
-  {
-    state: "Maharashtra",
-    district: "Nashik",
-    market: "Lasalgaon",
-    commodity: "Onion",
-    variety: "Red",
-    grade: "FAQ",
-    arrivalDate: new Date().toLocaleDateString("en-GB"),
-    minPrice: 1500,
-    maxPrice: 2200,
-    modalPrice: 1800,
-    fetchedAt: new Date().toISOString()
-  },
-  {
-    state: "Maharashtra",
-    district: "Pune",
-    market: "Pune",
-    commodity: "Tomato",
-    variety: "Local",
-    grade: "FAQ",
-    arrivalDate: new Date().toLocaleDateString("en-GB"),
-    minPrice: 800,
-    maxPrice: 1400,
-    modalPrice: 1100,
-    fetchedAt: new Date().toISOString()
-  },
-  {
-    state: "Punjab",
-    district: "Amritsar",
-    market: "Amritsar",
-    commodity: "Wheat",
-    variety: "147",
-    grade: "FAQ",
-    arrivalDate: new Date().toLocaleDateString("en-GB"),
-    minPrice: 2100,
-    maxPrice: 2300,
-    modalPrice: 2250,
-    fetchedAt: new Date().toISOString()
-  },
-  {
-    state: "Haryana",
-    district: "Karnal",
-    market: "Karnal",
-    commodity: "Paddy(Dhan)",
-    variety: "Basmati",
-    grade: "FAQ",
-    arrivalDate: new Date().toLocaleDateString("en-GB"),
-    minPrice: 3200,
-    maxPrice: 3800,
-    modalPrice: 3500,
-    fetchedAt: new Date().toISOString()
-  },
-  {
-    state: "Gujarat",
-    district: "Rajkot",
-    market: "Rajkot",
-    commodity: "Cotton",
-    variety: "Shankar 6",
-    grade: "FAQ",
-    arrivalDate: new Date().toLocaleDateString("en-GB"),
-    minPrice: 6500,
-    maxPrice: 7200,
-    modalPrice: 6800,
-    fetchedAt: new Date().toISOString()
-  },
-  {
-    state: "Madhya Pradesh",
-    district: "Indore",
-    market: "Indore",
-    commodity: "Soyabean",
-    variety: "Yellow",
-    grade: "FAQ",
-    arrivalDate: new Date().toLocaleDateString("en-GB"),
-    minPrice: 4200,
-    maxPrice: 4800,
-    modalPrice: 4500,
-    fetchedAt: new Date().toISOString()
-  },
-  {
-    state: "Uttar Pradesh",
-    district: "Agra",
-    market: "Agra",
-    commodity: "Potato",
-    variety: "Desi",
-    grade: "FAQ",
-    arrivalDate: new Date().toLocaleDateString("en-GB"),
-    minPrice: 1000,
-    maxPrice: 1400,
-    modalPrice: 1200,
-    fetchedAt: new Date().toISOString()
-  },
-  {
-    state: "Telangana",
-    district: "Nizamabad",
-    market: "Nizamabad",
-    commodity: "Turmeric",
-    variety: "Bulb",
-    grade: "FAQ",
-    arrivalDate: new Date().toLocaleDateString("en-GB"),
-    minPrice: 6500,
-    maxPrice: 7500,
-    modalPrice: 7000,
-    fetchedAt: new Date().toISOString()
-  }
+  // Maharashtra
+  { state: "Maharashtra", district: "Nashik", market: "Lasalgaon", commodity: "Onion", variety: "Red", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 1500, maxPrice: 2200, modalPrice: 1800, fetchedAt: new Date().toISOString() },
+  { state: "Maharashtra", district: "Pune", market: "Pune", commodity: "Tomato", variety: "Local", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 800, maxPrice: 1400, modalPrice: 1100, fetchedAt: new Date().toISOString() },
+  { state: "Maharashtra", district: "Nagpur", market: "Nagpur", commodity: "Orange", variety: "Nagpur Mandarin", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 2500, maxPrice: 4000, modalPrice: 3200, fetchedAt: new Date().toISOString() },
+  { state: "Maharashtra", district: "Jalgaon", market: "Jalgaon", commodity: "Banana", variety: "Robusta", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 1000, maxPrice: 1500, modalPrice: 1250, fetchedAt: new Date().toISOString() },
+  // Punjab
+  { state: "Punjab", district: "Amritsar", market: "Amritsar", commodity: "Wheat", variety: "147", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 2100, maxPrice: 2300, modalPrice: 2250, fetchedAt: new Date().toISOString() },
+  { state: "Punjab", district: "Ludhiana", market: "Ludhiana", commodity: "Paddy(Dhan)", variety: "PR 126", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 2200, maxPrice: 2400, modalPrice: 2320, fetchedAt: new Date().toISOString() },
+  { state: "Punjab", district: "Jalandhar", market: "Jalandhar", commodity: "Potato", variety: "Kufri Jyoti", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 800, maxPrice: 1100, modalPrice: 950, fetchedAt: new Date().toISOString() },
+  // Haryana
+  { state: "Haryana", district: "Karnal", market: "Karnal", commodity: "Paddy(Dhan)", variety: "Basmati", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 3200, maxPrice: 3800, modalPrice: 3500, fetchedAt: new Date().toISOString() },
+  { state: "Haryana", district: "Hisar", market: "Hisar", commodity: "Cotton", variety: "BT", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 6600, maxPrice: 7100, modalPrice: 6900, fetchedAt: new Date().toISOString() },
+  { state: "Haryana", district: "Rohtak", market: "Rohtak", commodity: "Wheat", variety: "HD 2967", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 2125, maxPrice: 2250, modalPrice: 2150, fetchedAt: new Date().toISOString() },
+  // Gujarat
+  { state: "Gujarat", district: "Rajkot", market: "Rajkot", commodity: "Cotton", variety: "Shankar 6", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 6500, maxPrice: 7200, modalPrice: 6800, fetchedAt: new Date().toISOString() },
+  { state: "Gujarat", district: "Junagadh", market: "Junagadh", commodity: "Groundnut", variety: "G20", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 5500, maxPrice: 6200, modalPrice: 5800, fetchedAt: new Date().toISOString() },
+  { state: "Gujarat", district: "Ahmedabad", market: "Ahmedabad", commodity: "Wheat", variety: "Lokwan", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 2300, maxPrice: 2600, modalPrice: 2450, fetchedAt: new Date().toISOString() },
+  { state: "Gujarat", district: "Surat", market: "Surat", commodity: "Sugarcane", variety: "Co-86032", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 280, maxPrice: 350, modalPrice: 310, fetchedAt: new Date().toISOString() },
+  // Madhya Pradesh
+  { state: "Madhya Pradesh", district: "Indore", market: "Indore", commodity: "Soyabean", variety: "Yellow", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 4200, maxPrice: 4800, modalPrice: 4500, fetchedAt: new Date().toISOString() },
+  { state: "Madhya Pradesh", district: "Ujjain", market: "Ujjain", commodity: "Wheat", variety: "Sharbati", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 2800, maxPrice: 3500, modalPrice: 3100, fetchedAt: new Date().toISOString() },
+  { state: "Madhya Pradesh", district: "Bhopal", market: "Bhopal", commodity: "Bengal Gram", variety: "Desi", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 5200, maxPrice: 5600, modalPrice: 5400, fetchedAt: new Date().toISOString() },
+  // Uttar Pradesh
+  { state: "Uttar Pradesh", district: "Agra", market: "Agra", commodity: "Potato", variety: "Desi", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 1000, maxPrice: 1400, modalPrice: 1200, fetchedAt: new Date().toISOString() },
+  { state: "Uttar Pradesh", district: "Kanpur", market: "Kanpur", commodity: "Wheat", variety: "Local", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 2125, maxPrice: 2300, modalPrice: 2200, fetchedAt: new Date().toISOString() },
+  { state: "Uttar Pradesh", district: "Lucknow", market: "Lucknow", commodity: "Mango", variety: "Dasheri", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 3000, maxPrice: 4500, modalPrice: 3800, fetchedAt: new Date().toISOString() },
+  { state: "Uttar Pradesh", district: "Meerut", market: "Meerut", commodity: "Sugarcane", variety: "Co-0238", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 340, maxPrice: 370, modalPrice: 350, fetchedAt: new Date().toISOString() },
+  // Telangana
+  { state: "Telangana", district: "Nizamabad", market: "Nizamabad", commodity: "Turmeric", variety: "Bulb", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 6500, maxPrice: 7500, modalPrice: 7000, fetchedAt: new Date().toISOString() },
+  { state: "Telangana", district: "Warangal", market: "Warangal", commodity: "Cotton", variety: "BT", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 6800, maxPrice: 7300, modalPrice: 7000, fetchedAt: new Date().toISOString() },
+  { state: "Telangana", district: "Hyderabad", market: "Bowenpally", commodity: "Onion", variety: "Nasik", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 1600, maxPrice: 2100, modalPrice: 1850, fetchedAt: new Date().toISOString() },
+  // Karnataka
+  { state: "Karnataka", district: "Bengaluru", market: "Yeshwanthpur", commodity: "Tomato", variety: "Hybrid", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 900, maxPrice: 1600, modalPrice: 1200, fetchedAt: new Date().toISOString() },
+  { state: "Karnataka", district: "Mysuru", market: "Mysuru", commodity: "Silk Cocoon", variety: "Bivoltine", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 45000, maxPrice: 60000, modalPrice: 52000, fetchedAt: new Date().toISOString() },
+  { state: "Karnataka", district: "Hubballi", market: "Hubballi", commodity: "Cotton", variety: "DCH 32", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 7000, maxPrice: 8000, modalPrice: 7500, fetchedAt: new Date().toISOString() },
+  // Rajasthan
+  { state: "Rajasthan", district: "Jaipur", market: "Jaipur", commodity: "Mustard", variety: "Black", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 4800, maxPrice: 5300, modalPrice: 5100, fetchedAt: new Date().toISOString() },
+  { state: "Rajasthan", district: "Jodhpur", market: "Jodhpur", commodity: "Guar Seed", variety: "Local", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 5200, maxPrice: 5800, modalPrice: 5500, fetchedAt: new Date().toISOString() },
+  { state: "Rajasthan", district: "Kota", market: "Kota", commodity: "Soyabean", variety: "Yellow", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 4100, maxPrice: 4700, modalPrice: 4400, fetchedAt: new Date().toISOString() },
+  // Bihar
+  { state: "Bihar", district: "Patna", market: "Patna", commodity: "Paddy(Dhan)", variety: "Sona Masuri", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 2000, maxPrice: 2300, modalPrice: 2150, fetchedAt: new Date().toISOString() },
+  { state: "Bihar", district: "Muzaffarpur", market: "Muzaffarpur", commodity: "Litchi", variety: "Shahi", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 4000, maxPrice: 6000, modalPrice: 5000, fetchedAt: new Date().toISOString() },
+  { state: "Bihar", district: "Purnia", market: "Purnia", commodity: "Maize", variety: "Hybrid", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 1800, maxPrice: 2100, modalPrice: 1950, fetchedAt: new Date().toISOString() },
+  // Andhra Pradesh
+  { state: "Andhra Pradesh", district: "Guntur", market: "Guntur", commodity: "Dry Chilli", variety: "Teja", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 18000, maxPrice: 22000, modalPrice: 20000, fetchedAt: new Date().toISOString() },
+  { state: "Andhra Pradesh", district: "Vijayawada", market: "Vijayawada", commodity: "Mango", variety: "Banganapalli", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 3500, maxPrice: 5000, modalPrice: 4200, fetchedAt: new Date().toISOString() },
+  { state: "Andhra Pradesh", district: "Kurnool", market: "Kurnool", commodity: "Onion", variety: "Local", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 1400, maxPrice: 2000, modalPrice: 1700, fetchedAt: new Date().toISOString() },
+  // West Bengal
+  { state: "West Bengal", district: "Bardhaman", market: "Bardhaman", commodity: "Paddy(Dhan)", variety: "Swarna", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 1900, maxPrice: 2100, modalPrice: 2000, fetchedAt: new Date().toISOString() },
+  { state: "West Bengal", district: "Hooghly", market: "Singur", commodity: "Potato", variety: "Jyoti", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 900, maxPrice: 1200, modalPrice: 1050, fetchedAt: new Date().toISOString() },
+  { state: "West Bengal", district: "Malda", market: "Malda", commodity: "Mango", variety: "Himsagar", grade: "FAQ", arrivalDate: new Date().toLocaleDateString("en-GB"), minPrice: 2500, maxPrice: 4000, modalPrice: 3200, fetchedAt: new Date().toISOString() }
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -278,8 +225,8 @@ export default function MandiRatesTab({ defaultState = "" }: MandiRatesTabProps)
 
   const demoRecords = selectedState 
     ? DEMO_MANDI_DATA.filter((r) => r.state === selectedState) 
-    : DEMO_MANDI_DATA.slice(0, 4); // show some default ones
-  const finalDemoRecords = demoRecords.length > 0 ? demoRecords : DEMO_MANDI_DATA.slice(0, 4);
+    : DEMO_MANDI_DATA.filter((r, i) => ["Maharashtra", "Punjab", "Gujarat", "Uttar Pradesh", "Karnataka", "Telangana"].includes(r.state) && i % 3 === 0).slice(0, 6);
+  const finalDemoRecords = demoRecords.length > 0 ? demoRecords : DEMO_MANDI_DATA.slice(0, 6);
 
   return (
     <div className="space-y-5">
