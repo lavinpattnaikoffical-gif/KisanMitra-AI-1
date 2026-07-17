@@ -223,10 +223,12 @@ export default function MandiRatesTab({ defaultState = "" }: MandiRatesTabProps)
     ? (data.records as PriceRecord[])
     : (varietyGroups[activeVariety] ?? []) as PriceRecord[];
 
-  const demoRecords = selectedState 
-    ? DEMO_MANDI_DATA.filter((r) => r.state === selectedState) 
-    : DEMO_MANDI_DATA.filter((r, i) => ["Maharashtra", "Punjab", "Gujarat", "Uttar Pradesh", "Karnataka", "Telangana"].includes(r.state) && i % 3 === 0).slice(0, 6);
-  const finalDemoRecords = demoRecords.length > 0 ? demoRecords : DEMO_MANDI_DATA.slice(0, 6);
+  let finalDemoRecords: PriceRecord[] = [];
+  if (selectedState) {
+    finalDemoRecords = DEMO_MANDI_DATA.filter((r) => r.state === selectedState);
+  } else {
+    finalDemoRecords = DEMO_MANDI_DATA.filter((r, i) => ["Maharashtra", "Punjab", "Gujarat", "Uttar Pradesh", "Karnataka", "Telangana"].includes(r.state) && i % 3 === 0).slice(0, 6);
+  }
 
   return (
     <div className="space-y-5">
@@ -397,26 +399,29 @@ export default function MandiRatesTab({ defaultState = "" }: MandiRatesTabProps)
             exit={{ opacity: 0 }}
             className="space-y-6"
           >
-            <div className="text-center py-10 material-elevated border border-border-subtle rounded-3xl shadow-sm">
-              <div className="w-16 h-16 rounded-full bg-surface-base border border-border-subtle flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <Globe size={24} className="text-content-muted" />
-              </div>
-              <p className="text-body-md font-bold text-content-primary mb-1">Search for a Crop</p>
-              <p className="text-body-sm text-content-secondary max-w-xs mx-auto leading-relaxed font-medium">
-                Type a crop name above to see today's mandi prices from Agmarknet.
-              </p>
-            </div>
-
             <div>
               <h3 className="text-body-md font-bold text-content-primary mb-4 flex items-center gap-2">
                 <TrendingUp size={18} className="text-signal-success" />
-                Popular Markets Today {selectedState && demoRecords.length > 0 ? `in ${selectedState}` : ""}
+                Popular Markets Today {selectedState ? `in ${selectedState}` : ""}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {finalDemoRecords.map((record, idx) => (
-                  <PriceCard key={`demo-${idx}`} record={record} index={idx} />
-                ))}
-              </div>
+              
+              {finalDemoRecords.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {finalDemoRecords.map((record, idx) => (
+                    <PriceCard key={`demo-${idx}`} record={record} index={idx} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 material-elevated border border-border-subtle rounded-3xl shadow-sm">
+                  <Globe size={28} className="text-content-muted mx-auto mb-3" />
+                  <p className="text-body-sm font-bold text-content-primary mb-1">
+                    No popular market data available
+                  </p>
+                  <p className="text-caption text-content-muted font-medium max-w-xs mx-auto leading-relaxed">
+                    We don't have popular demo data for <strong>{selectedState}</strong>. Please use the search bar above to look up specific crops.
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
