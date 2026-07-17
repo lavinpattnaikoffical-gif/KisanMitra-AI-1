@@ -656,6 +656,11 @@ export default function App() {
                     setFarmDevices(updated);
                     localStorage.setItem("kisan_devices", JSON.stringify(updated));
                   }}
+                  onRemoveDevice={(deviceId) => {
+                    const updated = farmDevices.filter(d => d.id !== deviceId);
+                    setFarmDevices(updated);
+                    localStorage.setItem("kisan_devices", JSON.stringify(updated));
+                  }}
                 />
               )}
 

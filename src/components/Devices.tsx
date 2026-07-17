@@ -17,7 +17,8 @@ import {
   Send,
   Loader2,
   Clock,
-  Zap
+  Zap,
+  Trash2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile } from "../types";
@@ -44,9 +45,10 @@ interface DevicesProps {
   devices: DeviceData[];
   zones: ZoneData[];
   onAddDevice: (device: DeviceData) => void;
+  onRemoveDevice?: (deviceId: string) => void;
 }
 
-export default function Devices({ zones, devices, onAddDevice }: DevicesProps) {
+export default function Devices({ zones, devices, onAddDevice, onRemoveDevice }: DevicesProps) {
   const [showProvisioning, setShowProvisioning] = useState(false);
   const [newDeviceType, setNewDeviceType] = useState<"SENSOR" | "PUMP" | "RELAY">("SENSOR");
   const [newDeviceZone, setNewDeviceZone] = useState("");
@@ -56,6 +58,25 @@ export default function Devices({ zones, devices, onAddDevice }: DevicesProps) {
   const [provisionError, setProvisionError] = useState<string | null>(null);
   const [testingDevice, setTestingDevice] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ deviceId: string; success: boolean; message: string } | null>(null);
+  const [deletingDevice, setDeletingDevice] = useState<string | null>(null);
+
+  const handleDeleteDevice = async (device: DeviceData) => {
+    if (!window.confirm(`Are you sure you want to delete device ${device.id}?`)) {
+      return;
+    }
+    setDeletingDevice(device.id);
+    try {
+      const targetId = device.dbId || device.id;
+      await api.deleteDevice(targetId);
+      if (onRemoveDevice) {
+        onRemoveDevice(device.id);
+      }
+    } catch (err: any) {
+      alert(`Failed to delete device: ${err.message}`);
+    } finally {
+      setDeletingDevice(null);
+    }
+  };
 
   const handleGenerate = async () => {
     setProvisioning(true);
@@ -346,6 +367,19 @@ void loop() {
                               <><Loader2 size={12} className="animate-spin" /> Sending...</>
                             ) : (
                               <><Send size={12} /> Test Reading</>
+                            )}
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            disabled={deletingDevice === device.id}
+                            onClick={() => handleDeleteDevice(device)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-micro font-bold bg-signal-critical/10 text-signal-critical hover:bg-signal-critical/20 transition-colors cursor-pointer disabled:opacity-40 mt-1"
+                          >
+                            {deletingDevice === device.id ? (
+                              <><Loader2 size={12} className="animate-spin" /> Deleting...</>
+                            ) : (
+                              <><Trash2 size={12} /> Delete</>
                             )}
                           </motion.button>
                           {thisTestResult && (

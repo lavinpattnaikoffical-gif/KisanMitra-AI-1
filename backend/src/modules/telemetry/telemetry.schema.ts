@@ -5,6 +5,12 @@ export const ingestReadingSchema = z.object({
   moisture: z.number().min(0).max(100).optional(),
   temperature: z.number().min(-40).max(80).optional(), // °C range for agricultural sensors
   humidity: z.number().min(0).max(100).optional(),
+  soilTemperature: z.number().min(-40).max(80).optional(),
+  ph: z.number().min(0).max(14).optional(),
+  gps: z.object({
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+  }).optional(),
   battery: z.number().min(0).max(100).optional(),
 });
 

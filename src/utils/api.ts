@@ -157,6 +157,13 @@ export const api = {
     });
   },
 
+  deleteDevice: async (deviceId: string) => {
+    return apiFetch(`${BACKEND_URL}/api/devices/${deviceId}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+  },
+
   getDevicesByZone: async (zoneId: string) => {
     return apiFetch(`${BACKEND_URL}/api/devices/zone/${zoneId}`, {
       headers: getHeaders(),

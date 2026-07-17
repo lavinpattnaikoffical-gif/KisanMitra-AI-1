@@ -197,11 +197,15 @@ model SensorReading {
   id          String   @id @default(cuid())
   deviceId    String
   zoneId      String
-  moisture    Float?   // %
-  temperature Float?   // °C
-  humidity    Float?   // %
-  battery     Float?   // % remaining
-  createdAt   DateTime @default(now())
+  moisture        Float?   // %
+  temperature     Float?   // °C
+  humidity        Float?   // %
+  soilTemperature Float?   // °C
+  ph              Float?
+  lat             Float?
+  lng             Float?
+  battery         Float?   // % remaining
+  createdAt       DateTime @default(now())
 
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   zone   Zone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)

@@ -22,6 +22,10 @@ export class TelemetryService {
         moisture: data.moisture ?? null,
         temperature: data.temperature ?? null,
         humidity: data.humidity ?? null,
+        soilTemperature: data.soilTemperature ?? null,
+        ph: data.ph ?? null,
+        lat: data.gps?.latitude ?? null,
+        lng: data.gps?.longitude ?? null,
         battery: data.battery ?? null,
       },
     });

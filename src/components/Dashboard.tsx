@@ -526,7 +526,7 @@ export default function Dashboard({
                         <div className={`p-3 rounded-xl ${moistureStatus.bg} text-center`}>
                           <Droplets size={18} className={`mx-auto mb-1 ${moistureStatus.color}`} />
                           <p className={`text-body-lg font-bold ${moistureStatus.color}`}>
-                            {telemetry.moisture !== null ? `${telemetry.moisture}%` : "—"}
+                            {telemetry.moisture !== null ? `${telemetry.moisture.toFixed(1)}%` : "—"}
                           </p>
                           <p className="text-micro text-content-muted">Moisture</p>
                         </div>
@@ -535,7 +535,7 @@ export default function Dashboard({
                         <div className="p-3 rounded-xl bg-signal-warning/10 text-center">
                           <Thermometer size={18} className="mx-auto mb-1 text-signal-warning" />
                           <p className="text-body-lg font-bold text-signal-warning">
-                            {telemetry.temperature !== null ? `${telemetry.temperature}°C` : "—"}
+                            {telemetry.temperature !== null ? `${telemetry.temperature.toFixed(1)}°C` : "—"}
                           </p>
                           <p className="text-micro text-content-muted">Temp</p>
                         </div>
@@ -544,7 +544,7 @@ export default function Dashboard({
                         <div className="p-3 rounded-xl bg-signal-info/10 text-center">
                           <CloudRain size={18} className="mx-auto mb-1 text-signal-info" />
                           <p className="text-body-lg font-bold text-signal-info">
-                            {telemetry.humidity !== null ? `${telemetry.humidity}%` : "—"}
+                            {telemetry.humidity !== null ? `${telemetry.humidity.toFixed(1)}%` : "—"}
                           </p>
                           <p className="text-micro text-content-muted">Humidity</p>
                         </div>
