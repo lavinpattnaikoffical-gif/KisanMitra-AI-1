@@ -115,7 +115,7 @@ export default function ZoneDetails({ zone, onBack }: ZoneDetailsProps) {
     setTimeout(() => setIsIrrigating(false), 3000);
   };
 
-  const hasTelemetry = telemetry && (telemetry.moisture !== null || telemetry.temperature !== null);
+  const hasTelemetry = telemetry && (telemetry.moisture != null || telemetry.temperature != null);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 pb-24">
@@ -160,36 +160,36 @@ export default function ZoneDetails({ zone, onBack }: ZoneDetailsProps) {
               <div className="p-4 bg-surface-base rounded-2xl border border-border-subtle text-center">
                 <Droplets size={20} className="text-signal-info mx-auto mb-2" />
                 <p className="text-content-secondary text-body-sm mb-1">Moisture</p>
-                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.moisture !== null ? "text-content-primary" : "text-content-muted"}`}>
-                  {hasTelemetry && telemetry!.moisture !== null ? `${telemetry!.moisture}%` : "--"}
+                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.moisture != null ? "text-content-primary" : "text-content-muted"}`}>
+                  {hasTelemetry && telemetry!.moisture != null ? `${telemetry!.moisture}%` : "--"}
                 </p>
               </div>
               <div className="p-4 bg-surface-base rounded-2xl border border-border-subtle text-center">
                 <Thermometer size={20} className="text-signal-warning mx-auto mb-2" />
                 <p className="text-content-secondary text-body-sm mb-1">Temperature</p>
-                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.temperature !== null ? "text-content-primary" : "text-content-muted"}`}>
-                  {hasTelemetry && telemetry!.temperature !== null ? `${telemetry!.temperature}°C` : "--"}
+                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.temperature != null ? "text-content-primary" : "text-content-muted"}`}>
+                  {hasTelemetry && telemetry!.temperature != null ? `${telemetry!.temperature}°C` : "--"}
                 </p>
               </div>
               <div className="p-4 bg-surface-base rounded-2xl border border-border-subtle text-center">
                 <CloudRain size={20} className="text-content-secondary mx-auto mb-2" />
                 <p className="text-content-secondary text-body-sm mb-1">Humidity</p>
-                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.humidity !== null ? "text-content-primary" : "text-content-muted"}`}>
-                  {hasTelemetry && telemetry!.humidity !== null ? `${telemetry!.humidity}%` : "--"}
+                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.humidity != null ? "text-content-primary" : "text-content-muted"}`}>
+                  {hasTelemetry && telemetry!.humidity != null ? `${telemetry!.humidity}%` : "--"}
                 </p>
               </div>
               <div className="p-4 bg-surface-base rounded-2xl border border-border-subtle text-center">
                 <Battery size={20} className="text-signal-success mx-auto mb-2" />
                 <p className="text-content-secondary text-body-sm mb-1">Battery</p>
-                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.battery !== null ? "text-content-primary" : "text-content-muted"}`}>
-                  {hasTelemetry && telemetry!.battery !== null ? `${telemetry!.battery}%` : "--"}
+                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.battery != null ? "text-content-primary" : "text-content-muted"}`}>
+                  {hasTelemetry && telemetry!.battery != null ? `${telemetry!.battery}%` : "--"}
                 </p>
               </div>
               <div className="p-4 bg-surface-base rounded-2xl border border-border-subtle text-center">
                 <Beaker size={20} className="text-purple-500 mx-auto mb-2" />
                 <p className="text-content-secondary text-body-sm mb-1">Soil pH</p>
-                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.ph !== null ? "text-content-primary" : "text-content-muted"}`}>
-                  {hasTelemetry && telemetry!.ph !== null ? telemetry!.ph.toFixed(1) : "--"}
+                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.ph != null ? "text-content-primary" : "text-content-muted"}`}>
+                  {hasTelemetry && telemetry!.ph != null ? telemetry!.ph.toFixed(1) : "--"}
                 </p>
               </div>
             </div>
@@ -276,7 +276,7 @@ export default function ZoneDetails({ zone, onBack }: ZoneDetailsProps) {
             ) : hasTelemetry ? (
               <p className="text-body-sm text-content-primary leading-relaxed relative z-10">
                 📊 Current readings — Moisture: <strong>{telemetry!.moisture}%</strong>, Temp: <strong>{telemetry!.temperature}°C</strong>, Humidity: <strong>{telemetry!.humidity}%</strong>, pH: <strong>{telemetry!.ph ?? '--'}</strong>.
-                {telemetry!.moisture !== null && telemetry!.moisture < 40 
+                {telemetry!.moisture != null && telemetry!.moisture < 40 
                   ? " ⚠️ Moisture is below threshold! Consider irrigating soon."
                   : " ✅ All parameters look normal for your " + zone.crop + " crop."}
               </p>

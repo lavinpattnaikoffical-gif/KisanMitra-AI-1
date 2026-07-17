@@ -327,11 +327,11 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
               <div className="p-5 grid grid-cols-2 md:grid-cols-5 gap-4">
                 {(() => {
                   const t = liveTelemetry[zone.id];
-                  const hasTelemetry = t && (t.moisture !== null || t.temperature !== null || t.humidity !== null);
-                  const moisture = hasTelemetry && t.moisture !== null ? `${t.moisture}%` : zone.metrics.moisture;
-                  const temp = hasTelemetry && t.temperature !== null ? `${t.temperature}°` : zone.metrics.temp;
-                  const humidity = hasTelemetry && t.humidity !== null ? `${t.humidity}%` : zone.metrics.weather;
-                  const ph = hasTelemetry && t.ph !== null ? t.ph.toFixed(1) : "--";
+                  const hasTelemetry = t && (t.moisture != null || t.temperature != null || t.humidity != null);
+                  const moisture = hasTelemetry && t.moisture != null ? `${t.moisture}%` : zone.metrics.moisture;
+                  const temp = hasTelemetry && t.temperature != null ? `${t.temperature}°` : zone.metrics.temp;
+                  const humidity = hasTelemetry && t.humidity != null ? `${t.humidity}%` : zone.metrics.weather;
+                  const ph = hasTelemetry && t.ph != null ? t.ph.toFixed(1) : "--";
                   return (
                     <>
                       <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">

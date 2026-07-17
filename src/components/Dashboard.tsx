@@ -454,7 +454,7 @@ export default function Dashboard({
                 <Droplets size={24} className={getMoistureStatus(dashStats?.averageMoisture ?? null).color} />
               </div>
               <p className="text-body-lg font-bold text-content-primary">
-                {dashStats?.averageMoisture !== null && dashStats?.averageMoisture !== undefined ? `${dashStats.averageMoisture}%` : "—"}
+                {dashStats?.averageMoisture != null ? `${dashStats.averageMoisture}%` : "—"}
               </p>
               <p className="text-micro text-content-muted uppercase tracking-wider font-medium">Avg Moisture</p>
             </div>
@@ -527,7 +527,7 @@ export default function Dashboard({
                         <div className={`p-3 rounded-xl ${moistureStatus.bg} text-center`}>
                           <Droplets size={18} className={`mx-auto mb-1 ${moistureStatus.color}`} />
                           <p className={`text-body-lg font-bold ${moistureStatus.color}`}>
-                            {telemetry.moisture !== null ? `${telemetry.moisture.toFixed(1)}%` : "—"}
+                            {telemetry.moisture != null ? `${telemetry.moisture.toFixed(1)}%` : "—"}
                           </p>
                           <p className="text-micro text-content-muted">Moisture</p>
                         </div>
@@ -536,7 +536,7 @@ export default function Dashboard({
                         <div className="p-3 rounded-xl bg-signal-warning/10 text-center">
                           <Thermometer size={18} className="mx-auto mb-1 text-signal-warning" />
                           <p className="text-body-lg font-bold text-signal-warning">
-                            {telemetry.temperature !== null ? `${telemetry.temperature.toFixed(1)}°C` : "—"}
+                            {telemetry.temperature != null ? `${telemetry.temperature.toFixed(1)}°C` : "—"}
                           </p>
                           <p className="text-micro text-content-muted">Temp</p>
                         </div>
@@ -545,7 +545,7 @@ export default function Dashboard({
                         <div className="p-3 rounded-xl bg-signal-info/10 text-center">
                           <CloudRain size={18} className="mx-auto mb-1 text-signal-info" />
                           <p className="text-body-lg font-bold text-signal-info">
-                            {telemetry.humidity !== null ? `${telemetry.humidity.toFixed(1)}%` : "—"}
+                            {telemetry.humidity != null ? `${telemetry.humidity.toFixed(1)}%` : "—"}
                           </p>
                           <p className="text-micro text-content-muted">Humidity</p>
                         </div>
@@ -554,7 +554,7 @@ export default function Dashboard({
                         <div className="p-3 rounded-xl bg-purple-500/10 text-center">
                           <Beaker size={18} className="mx-auto mb-1 text-purple-500" />
                           <p className="text-body-lg font-bold text-purple-500">
-                            {telemetry.ph !== null && telemetry.ph !== undefined ? telemetry.ph.toFixed(1) : "—"}
+                            {telemetry.ph != null ? telemetry.ph.toFixed(1) : "—"}
                           </p>
                           <p className="text-micro text-content-muted">Soil pH</p>
                         </div>
@@ -620,7 +620,7 @@ export default function Dashboard({
             {/* Step 2: No devices connected */}
             {!zones.some(z => {
               const t = liveTelemetry[z.id];
-              return t && t.moisture !== null;
+              return t && t.moisture != null;
             }) && (
               <div className="p-5 rounded-2xl bg-signal-info/10 border border-signal-info/20 flex items-start gap-3">
                 <Bot size={18} className="text-signal-info shrink-0 mt-0.5" />
@@ -641,7 +641,7 @@ export default function Dashboard({
             {/* Step 3: Devices connected, show real recommendations */}
             {zones.some(z => {
               const t = liveTelemetry[z.id];
-              return t && t.moisture !== null;
+              return t && t.moisture != null;
             }) && (
               <div className="p-5 rounded-2xl bg-signal-success/10 border border-signal-success/20 flex items-start gap-3">
                 <Sparkles size={18} className="text-signal-success shrink-0 mt-0.5" />
