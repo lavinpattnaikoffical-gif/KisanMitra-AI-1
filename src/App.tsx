@@ -751,7 +751,9 @@ export default function App() {
               onClick={() => setCurrentTab("ai")}
               className="flex items-center justify-center w-14 h-14 rounded-full bg-content-primary text-surface-base shadow-2xl hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-shadow cursor-pointer relative group"
             >
-              <Bot size={24} />
+              <div className="flex items-center justify-center w-full h-full">
+                <Bot size={24} />
+              </div>
               {/* RAMU Idle 'Observing' state - calm ambient pulse */}
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-signal-info opacity-40" style={{ animationDuration: '3s' }}></span>

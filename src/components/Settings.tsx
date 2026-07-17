@@ -57,7 +57,6 @@ export default function Settings({
   
   // Settings configs
   const [cloudSync, setCloudSync] = useState(true);
-  const [selectedModel, setSelectedModel] = useState("gemini-3.5-flash");
   const [tempUnit, setTempUnit] = useState<"C" | "F">(profile.temperatureUnit || "C");
   
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -355,21 +354,6 @@ export default function Settings({
           <h3 className="text-micro font-bold text-content-muted uppercase tracking-widest border-b border-border-subtle pb-3">{t.apiConfigTitle}</h3>
 
           <div className="space-y-5 select-none">
-            {/* Preferred Model Choice */}
-            <div className="space-y-1.5">
-              <label className="text-micro font-bold text-content-muted uppercase tracking-widest block" htmlFor="model-select">{t.modelChoice}</label>
-              <select
-                id="model-select"
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="w-full h-12 bg-surface-base text-body-sm font-medium border border-border-subtle rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-signal-success/30 focus:border-signal-success transition-colors shadow-sm"
-              >
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash (Default)</option>
-                <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
-                <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
-              </select>
-            </div>
-
             {/* Cloud Synchronization toggles */}
             <div className="flex items-center justify-between py-3 border-t border-b border-border-subtle">
               <div>
@@ -380,13 +364,11 @@ export default function Settings({
               <button
                 id="cloud-sync-toggle"
                 onClick={() => setCloudSync(!cloudSync)}
-                className={`w-14 h-7 rounded-full transition-colors relative cursor-pointer focus:outline-none shadow-inner ${
-                  cloudSync ? "bg-signal-success" : "bg-border-strong"
+                className={`w-14 h-7 rounded-full transition-colors flex items-center px-1 cursor-pointer focus:outline-none shadow-inner ${
+                  cloudSync ? "bg-signal-success justify-end" : "bg-border-strong justify-start"
                 }`}
               >
-                <span className={`absolute top-1 bg-surface-base w-5 h-5 rounded-full transition-transform shadow-sm ${
-                  cloudSync ? "translate-x-8" : "translate-x-1"
-                }`} />
+                <span className="bg-surface-base w-5 h-5 rounded-full shadow-sm transition-transform" />
               </button>
             </div>
 
