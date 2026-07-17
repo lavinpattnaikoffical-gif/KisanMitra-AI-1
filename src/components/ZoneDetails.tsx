@@ -13,7 +13,8 @@ import {
   RefreshCw,
   CloudRain,
   Sparkles,
-  Battery
+  Battery,
+  Beaker
 } from "lucide-react";
 import { motion } from "motion/react";
 import { api } from "../utils/api";
@@ -28,6 +29,7 @@ interface TelemetryData {
   temperature: number | null;
   humidity: number | null;
   battery: number | null;
+  ph: number | null;
   createdAt: string;
   device?: { deviceId: string; type: string; role: string; status: string };
 }
@@ -154,7 +156,7 @@ export default function ZoneDetails({ zone, onBack }: ZoneDetailsProps) {
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="p-4 bg-surface-base rounded-2xl border border-border-subtle text-center">
                 <Droplets size={20} className="text-signal-info mx-auto mb-2" />
                 <p className="text-content-secondary text-body-sm mb-1">Moisture</p>
@@ -181,6 +183,13 @@ export default function ZoneDetails({ zone, onBack }: ZoneDetailsProps) {
                 <p className="text-content-secondary text-body-sm mb-1">Battery</p>
                 <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.battery !== null ? "text-content-primary" : "text-content-muted"}`}>
                   {hasTelemetry && telemetry!.battery !== null ? `${telemetry!.battery}%` : "--"}
+                </p>
+              </div>
+              <div className="p-4 bg-surface-base rounded-2xl border border-border-subtle text-center">
+                <Beaker size={20} className="text-purple-500 mx-auto mb-2" />
+                <p className="text-content-secondary text-body-sm mb-1">Soil pH</p>
+                <p className={`text-h3 font-bold ${hasTelemetry && telemetry!.ph !== null ? "text-content-primary" : "text-content-muted"}`}>
+                  {hasTelemetry && telemetry!.ph !== null ? telemetry!.ph.toFixed(1) : "--"}
                 </p>
               </div>
             </div>
@@ -233,7 +242,7 @@ export default function ZoneDetails({ zone, onBack }: ZoneDetailsProps) {
                     <div>
                       <p className="font-bold text-content-primary">Latest Reading</p>
                       <p className="text-body-sm text-content-secondary">
-                        Moisture: {telemetry!.moisture ?? '--'}% | Temp: {telemetry!.temperature ?? '--'}°C | Humidity: {telemetry!.humidity ?? '--'}%
+                        Moisture: {telemetry!.moisture ?? '--'}% | Temp: {telemetry!.temperature ?? '--'}°C | Humidity: {telemetry!.humidity ?? '--'}% | pH: {telemetry!.ph ?? '--'}
                       </p>
                     </div>
                   </div>
@@ -266,7 +275,7 @@ export default function ZoneDetails({ zone, onBack }: ZoneDetailsProps) {
               </p>
             ) : hasTelemetry ? (
               <p className="text-body-sm text-content-primary leading-relaxed relative z-10">
-                📊 Current readings — Moisture: <strong>{telemetry!.moisture}%</strong>, Temp: <strong>{telemetry!.temperature}°C</strong>, Humidity: <strong>{telemetry!.humidity}%</strong>.
+                📊 Current readings — Moisture: <strong>{telemetry!.moisture}%</strong>, Temp: <strong>{telemetry!.temperature}°C</strong>, Humidity: <strong>{telemetry!.humidity}%</strong>, pH: <strong>{telemetry!.ph ?? '--'}</strong>.
                 {telemetry!.moisture !== null && telemetry!.moisture < 40 
                   ? " ⚠️ Moisture is below threshold! Consider irrigating soon."
                   : " ✅ All parameters look normal for your " + zone.crop + " crop."}

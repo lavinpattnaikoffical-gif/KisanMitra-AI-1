@@ -21,7 +21,8 @@ import {
   TrendingDown,
   Minus,
   Bot,
-  ArrowRight
+  ArrowRight,
+  Beaker
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile } from "../types";
@@ -521,7 +522,7 @@ export default function Dashboard({
 
                     {/* Live Sensor Grid */}
                     {hasTelemetry ? (
-                      <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                         {/* Moisture */}
                         <div className={`p-3 rounded-xl ${moistureStatus.bg} text-center`}>
                           <Droplets size={18} className={`mx-auto mb-1 ${moistureStatus.color}`} />
@@ -547,6 +548,15 @@ export default function Dashboard({
                             {telemetry.humidity !== null ? `${telemetry.humidity.toFixed(1)}%` : "—"}
                           </p>
                           <p className="text-micro text-content-muted">Humidity</p>
+                        </div>
+
+                        {/* pH */}
+                        <div className="p-3 rounded-xl bg-purple-500/10 text-center">
+                          <Beaker size={18} className="mx-auto mb-1 text-purple-500" />
+                          <p className="text-body-lg font-bold text-purple-500">
+                            {telemetry.ph !== null && telemetry.ph !== undefined ? telemetry.ph.toFixed(1) : "—"}
+                          </p>
+                          <p className="text-micro text-content-muted">Soil pH</p>
                         </div>
                       </div>
                     ) : (

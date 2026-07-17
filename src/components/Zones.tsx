@@ -16,7 +16,8 @@ import {
   Bot,
   Radio,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Beaker
 } from "lucide-react";
 import { UserProfile } from "../types";
 import { ZoneData } from "./Dashboard";
@@ -56,6 +57,7 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
     moisture: number | null;
     temperature: number | null;
     humidity: number | null;
+    ph: number | null;
     battery: number | null;
     createdAt: string;
     device?: { deviceId: string; status: string };
@@ -322,31 +324,37 @@ export default function Zones({ profile, zones, onAddZone, onNavigateTab }: Zone
               </div>
 
               {/* Zone Metrics — Live Telemetry */}
-              <div className="p-5 grid grid-cols-4 gap-4">
+              <div className="p-5 grid grid-cols-2 md:grid-cols-5 gap-4">
                 {(() => {
                   const t = liveTelemetry[zone.id];
                   const hasTelemetry = t && (t.moisture !== null || t.temperature !== null || t.humidity !== null);
                   const moisture = hasTelemetry && t.moisture !== null ? `${t.moisture}%` : zone.metrics.moisture;
                   const temp = hasTelemetry && t.temperature !== null ? `${t.temperature}°` : zone.metrics.temp;
                   const humidity = hasTelemetry && t.humidity !== null ? `${t.humidity}%` : zone.metrics.weather;
+                  const ph = hasTelemetry && t.ph !== null ? t.ph.toFixed(1) : "--";
                   return (
                     <>
-                      <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
+                      <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
                         <Droplet size={18} className="text-signal-info mb-1" />
                         <span className={`text-body-md font-bold ${hasTelemetry ? "text-content-primary" : "text-content-muted"}`}>{moisture}</span>
                         <span className="text-micro text-content-muted">Moisture</span>
                       </div>
-                      <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
+                      <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
                         <ThermometerSun size={18} className="text-signal-warning mb-1" />
                         <span className={`text-body-md font-bold ${hasTelemetry ? "text-content-primary" : "text-content-muted"}`}>{temp}</span>
                         <span className="text-micro text-content-muted">Temp</span>
                       </div>
-                      <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
+                      <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
                         <CloudRain size={18} className="text-content-secondary mb-1" />
                         <span className={`text-body-md font-bold ${hasTelemetry ? "text-content-primary" : "text-content-muted"}`}>{humidity}</span>
                         <span className="text-micro text-content-muted">Humidity</span>
                       </div>
-                      <div className="col-span-1 flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
+                      <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
+                        <Beaker size={18} className="text-purple-500 mb-1" />
+                        <span className={`text-body-md font-bold ${hasTelemetry ? "text-content-primary" : "text-content-muted"}`}>{ph}</span>
+                        <span className="text-micro text-content-muted">Soil pH</span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-surface-base border border-border-subtle">
                         {hasTelemetry ? (
                           <Wifi size={18} className="text-signal-success mb-1" />
                         ) : zone.connectivity ? (
