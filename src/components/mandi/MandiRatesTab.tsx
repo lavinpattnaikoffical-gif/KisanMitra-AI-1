@@ -22,7 +22,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  Globe, AlertTriangle, Info, RefreshCw, Layers
+  Globe, AlertTriangle, Info, RefreshCw, Layers, TrendingUp
 } from "lucide-react";
 import { INDIAN_STATES, UNION_TERRITORIES } from "../../utils/constants";
 import { api } from "../../utils/api";
@@ -43,6 +43,113 @@ interface MandiResponse {
   note?: string;
   totalResults: number;
 }
+
+const DEMO_MANDI_DATA: PriceRecord[] = [
+  {
+    state: "Maharashtra",
+    district: "Nashik",
+    market: "Lasalgaon",
+    commodity: "Onion",
+    variety: "Red",
+    grade: "FAQ",
+    arrivalDate: new Date().toLocaleDateString("en-GB"),
+    minPrice: 1500,
+    maxPrice: 2200,
+    modalPrice: 1800,
+    fetchedAt: new Date().toISOString()
+  },
+  {
+    state: "Maharashtra",
+    district: "Pune",
+    market: "Pune",
+    commodity: "Tomato",
+    variety: "Local",
+    grade: "FAQ",
+    arrivalDate: new Date().toLocaleDateString("en-GB"),
+    minPrice: 800,
+    maxPrice: 1400,
+    modalPrice: 1100,
+    fetchedAt: new Date().toISOString()
+  },
+  {
+    state: "Punjab",
+    district: "Amritsar",
+    market: "Amritsar",
+    commodity: "Wheat",
+    variety: "147",
+    grade: "FAQ",
+    arrivalDate: new Date().toLocaleDateString("en-GB"),
+    minPrice: 2100,
+    maxPrice: 2300,
+    modalPrice: 2250,
+    fetchedAt: new Date().toISOString()
+  },
+  {
+    state: "Haryana",
+    district: "Karnal",
+    market: "Karnal",
+    commodity: "Paddy(Dhan)",
+    variety: "Basmati",
+    grade: "FAQ",
+    arrivalDate: new Date().toLocaleDateString("en-GB"),
+    minPrice: 3200,
+    maxPrice: 3800,
+    modalPrice: 3500,
+    fetchedAt: new Date().toISOString()
+  },
+  {
+    state: "Gujarat",
+    district: "Rajkot",
+    market: "Rajkot",
+    commodity: "Cotton",
+    variety: "Shankar 6",
+    grade: "FAQ",
+    arrivalDate: new Date().toLocaleDateString("en-GB"),
+    minPrice: 6500,
+    maxPrice: 7200,
+    modalPrice: 6800,
+    fetchedAt: new Date().toISOString()
+  },
+  {
+    state: "Madhya Pradesh",
+    district: "Indore",
+    market: "Indore",
+    commodity: "Soyabean",
+    variety: "Yellow",
+    grade: "FAQ",
+    arrivalDate: new Date().toLocaleDateString("en-GB"),
+    minPrice: 4200,
+    maxPrice: 4800,
+    modalPrice: 4500,
+    fetchedAt: new Date().toISOString()
+  },
+  {
+    state: "Uttar Pradesh",
+    district: "Agra",
+    market: "Agra",
+    commodity: "Potato",
+    variety: "Desi",
+    grade: "FAQ",
+    arrivalDate: new Date().toLocaleDateString("en-GB"),
+    minPrice: 1000,
+    maxPrice: 1400,
+    modalPrice: 1200,
+    fetchedAt: new Date().toISOString()
+  },
+  {
+    state: "Telangana",
+    district: "Nizamabad",
+    market: "Nizamabad",
+    commodity: "Turmeric",
+    variety: "Bulb",
+    grade: "FAQ",
+    arrivalDate: new Date().toLocaleDateString("en-GB"),
+    minPrice: 6500,
+    maxPrice: 7500,
+    modalPrice: 7000,
+    fetchedAt: new Date().toISOString()
+  }
+];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -168,6 +275,11 @@ export default function MandiRatesTab({ defaultState = "" }: MandiRatesTabProps)
     : activeVariety === "all"
     ? (data.records as PriceRecord[])
     : (varietyGroups[activeVariety] ?? []) as PriceRecord[];
+
+  const demoRecords = selectedState 
+    ? DEMO_MANDI_DATA.filter((r) => r.state === selectedState) 
+    : DEMO_MANDI_DATA.slice(0, 4); // show some default ones
+  const finalDemoRecords = demoRecords.length > 0 ? demoRecords : DEMO_MANDI_DATA.slice(0, 4);
 
   return (
     <div className="space-y-5">
@@ -336,15 +448,29 @@ export default function MandiRatesTab({ defaultState = "" }: MandiRatesTabProps)
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-center py-16 material-elevated border border-border-subtle rounded-3xl shadow-sm"
+            className="space-y-6"
           >
-            <div className="w-16 h-16 rounded-full bg-surface-base border border-border-subtle flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <Globe size={24} className="text-content-muted" />
+            <div className="text-center py-10 material-elevated border border-border-subtle rounded-3xl shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-surface-base border border-border-subtle flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <Globe size={24} className="text-content-muted" />
+              </div>
+              <p className="text-body-md font-bold text-content-primary mb-1">Search for a Crop</p>
+              <p className="text-body-sm text-content-secondary max-w-xs mx-auto leading-relaxed font-medium">
+                Type a crop name above to see today's mandi prices from Agmarknet.
+              </p>
             </div>
-            <p className="text-body-md font-bold text-content-primary mb-1">Search for a Crop</p>
-            <p className="text-body-sm text-content-secondary max-w-xs mx-auto leading-relaxed font-medium">
-              Type a crop name above to see today's mandi prices from Agmarknet.
-            </p>
+
+            <div>
+              <h3 className="text-body-md font-bold text-content-primary mb-4 flex items-center gap-2">
+                <TrendingUp size={18} className="text-signal-success" />
+                Popular Markets Today {selectedState && demoRecords.length > 0 ? `in ${selectedState}` : ""}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {finalDemoRecords.map((record, idx) => (
+                  <PriceCard key={`demo-${idx}`} record={record} index={idx} />
+                ))}
+              </div>
+            </div>
           </motion.div>
         )}
 
