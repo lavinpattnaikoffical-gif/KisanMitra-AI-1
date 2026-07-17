@@ -95,8 +95,92 @@ async function callOllama(prompt: string, systemPrompt?: string, model?: string)
   return data.response || "No response from Ollama.";
 }
 
-// 🌾 Mock Mandi Rates Data Creator (Nashik / Amritsar / Gondal / Mandya etc.)
+// 🌾 Mock Mandi Rates Data — All 28 Indian States (eNAM / Agmarknet sourced baselines)
 const MOCK_MANDI_DATA: Record<string, { crop: string, basePrice: number, unit: string, arrivals: string, quality: "A" | "B" | "C" }[]> = {
+  // ── Major Farming States ─────────────────────────────────────────────────
+  "Andhra Pradesh": [
+    { crop: "Rice (Paddy)", basePrice: 2183, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Cotton", basePrice: 6750, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Chilli", basePrice: 12500, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Groundnut", basePrice: 5800, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Tobacco", basePrice: 8200, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Arunachal Pradesh": [
+    { crop: "Rice (Paddy)", basePrice: 2300, unit: "Quintal", arrivals: "Low", quality: "B" },
+    { crop: "Maize", basePrice: 1950, unit: "Quintal", arrivals: "Low", quality: "B" },
+    { crop: "Ginger", basePrice: 4500, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Assam": [
+    { crop: "Tea", basePrice: 18500, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Rice (Paddy)", basePrice: 2100, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Jute", basePrice: 5200, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Mustard", basePrice: 5600, unit: "Quintal", arrivals: "Low", quality: "A" },
+  ],
+  "Bihar": [
+    { crop: "Wheat", basePrice: 2150, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Maize", basePrice: 1850, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Lentil (Masoor)", basePrice: 5400, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Sugarcane", basePrice: 3050, unit: "Ton", arrivals: "Medium", quality: "B" },
+    { crop: "Potato", basePrice: 1100, unit: "Quintal", arrivals: "High", quality: "B" },
+  ],
+  "Chhattisgarh": [
+    { crop: "Rice (Paddy)", basePrice: 2183, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Maize", basePrice: 1800, unit: "Quintal", arrivals: "High", quality: "B" },
+    { crop: "Soybean", basePrice: 4500, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Toor Dal", basePrice: 7200, unit: "Quintal", arrivals: "Low", quality: "A" },
+  ],
+  "Goa": [
+    { crop: "Rice (Paddy)", basePrice: 2500, unit: "Quintal", arrivals: "Low", quality: "B" },
+    { crop: "Cashew", basePrice: 9800, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Coconut", basePrice: 2800, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Gujarat": [
+    { crop: "Cotton", basePrice: 7100, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Groundnut", basePrice: 6400, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Wheat", basePrice: 2350, unit: "Quintal", arrivals: "Low", quality: "A" },
+    { crop: "Onion", basePrice: 2100, unit: "Quintal", arrivals: "High", quality: "C" },
+    { crop: "Cumin", basePrice: 22000, unit: "Quintal", arrivals: "High", quality: "A" },
+  ],
+  "Haryana": [
+    { crop: "Wheat", basePrice: 2260, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Rice (Paddy)", basePrice: 2183, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Mustard", basePrice: 5650, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Sugarcane", basePrice: 3250, unit: "Ton", arrivals: "Medium", quality: "A" },
+    { crop: "Sunflower", basePrice: 6200, unit: "Quintal", arrivals: "Low", quality: "B" },
+  ],
+  "Himachal Pradesh": [
+    { crop: "Apple", basePrice: 6500, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Potato", basePrice: 1400, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Tomato", basePrice: 2100, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Maize", basePrice: 1950, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Jharkhand": [
+    { crop: "Rice (Paddy)", basePrice: 2183, unit: "Quintal", arrivals: "High", quality: "B" },
+    { crop: "Maize", basePrice: 1850, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Tomato", basePrice: 1750, unit: "Quintal", arrivals: "Low", quality: "B" },
+    { crop: "Lentil (Masoor)", basePrice: 5200, unit: "Quintal", arrivals: "Low", quality: "A" },
+  ],
+  "Karnataka": [
+    { crop: "Sugarcane", basePrice: 3200, unit: "Ton", arrivals: "High", quality: "A" },
+    { crop: "Rice (Paddy)", basePrice: 2250, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Ragi", basePrice: 3850, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Tomato", basePrice: 1950, unit: "Quintal", arrivals: "Low", quality: "B" },
+    { crop: "Coffee", basePrice: 28000, unit: "Quintal", arrivals: "High", quality: "A" },
+  ],
+  "Kerala": [
+    { crop: "Coconut", basePrice: 3200, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Rubber", basePrice: 15500, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Pepper", basePrice: 42000, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Banana", basePrice: 2800, unit: "Quintal", arrivals: "High", quality: "B" },
+    { crop: "Coffee", basePrice: 26000, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Madhya Pradesh": [
+    { crop: "Soybean", basePrice: 4650, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Wheat", basePrice: 2200, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Chickpea (Chana)", basePrice: 5300, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Garlic", basePrice: 7500, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Cotton", basePrice: 6700, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
   "Maharashtra": [
     { crop: "Cotton", basePrice: 6800, unit: "Quintal", arrivals: "High", quality: "A" },
     { crop: "Soybean", basePrice: 4600, unit: "Quintal", arrivals: "Medium", quality: "A" },
@@ -104,23 +188,91 @@ const MOCK_MANDI_DATA: Record<string, { crop: string, basePrice: number, unit: s
     { crop: "Sugarcane", basePrice: 3150, unit: "Ton", arrivals: "High", quality: "A" },
     { crop: "Tomato", basePrice: 1800, unit: "Quintal", arrivals: "Medium", quality: "B" },
   ],
+  "Manipur": [
+    { crop: "Rice (Paddy)", basePrice: 2400, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Maize", basePrice: 2000, unit: "Quintal", arrivals: "Low", quality: "B" },
+    { crop: "Ginger", basePrice: 5000, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Meghalaya": [
+    { crop: "Potato", basePrice: 1600, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Ginger", basePrice: 5200, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Rice (Paddy)", basePrice: 2350, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Turmeric", basePrice: 7200, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Mizoram": [
+    { crop: "Rice (Paddy)", basePrice: 2500, unit: "Quintal", arrivals: "Low", quality: "B" },
+    { crop: "Ginger", basePrice: 4800, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Banana", basePrice: 2200, unit: "Quintal", arrivals: "Medium", quality: "B" },
+  ],
+  "Nagaland": [
+    { crop: "Rice (Paddy)", basePrice: 2450, unit: "Quintal", arrivals: "Low", quality: "B" },
+    { crop: "Maize", basePrice: 2100, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Ginger", basePrice: 5100, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Odisha": [
+    { crop: "Rice (Paddy)", basePrice: 2183, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Maize", basePrice: 1820, unit: "Quintal", arrivals: "High", quality: "B" },
+    { crop: "Groundnut", basePrice: 5500, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Jute", basePrice: 5000, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Turmeric", basePrice: 7000, unit: "Quintal", arrivals: "Low", quality: "A" },
+  ],
   "Punjab": [
     { crop: "Wheat", basePrice: 2275, unit: "Quintal", arrivals: "Very High", quality: "A" },
     { crop: "Rice (Paddy)", basePrice: 2203, unit: "Quintal", arrivals: "High", quality: "A" },
     { crop: "Cotton", basePrice: 6900, unit: "Quintal", arrivals: "Low", quality: "B" },
     { crop: "Potato", basePrice: 1200, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Mustard", basePrice: 5500, unit: "Quintal", arrivals: "Medium", quality: "A" },
   ],
-  "Gujarat": [
-    { crop: "Cotton", basePrice: 7100, unit: "Quintal", arrivals: "Medium", quality: "A" },
-    { crop: "Groundnut", basePrice: 6400, unit: "Quintal", arrivals: "Medium", quality: "A" },
-    { crop: "Wheat", basePrice: 2350, unit: "Quintal", arrivals: "Low", quality: "A" },
-    { crop: "Onion", basePrice: 2100, unit: "Quintal", arrivals: "High", quality: "C" },
+  "Rajasthan": [
+    { crop: "Bajra (Pearl Millet)", basePrice: 2350, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Mustard", basePrice: 5700, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Cumin", basePrice: 24000, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Wheat", basePrice: 2180, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Moong Dal", basePrice: 7800, unit: "Quintal", arrivals: "Medium", quality: "B" },
   ],
-  "Karnataka": [
-    { crop: "Sugarcane", basePrice: 3200, unit: "Ton", arrivals: "High", quality: "A" },
-    { crop: "Rice (Paddy)", basePrice: 2250, unit: "Quintal", arrivals: "Medium", quality: "A" },
-    { crop: "Ragi", basePrice: 3850, unit: "Quintal", arrivals: "High", quality: "A" },
-    { crop: "Tomato", basePrice: 1950, unit: "Quintal", arrivals: "Low", quality: "B" },
+  "Sikkim": [
+    { crop: "Cardamom", basePrice: 85000, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Ginger", basePrice: 5500, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Maize", basePrice: 2000, unit: "Quintal", arrivals: "Low", quality: "B" },
+  ],
+  "Tamil Nadu": [
+    { crop: "Rice (Paddy)", basePrice: 2183, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Sugarcane", basePrice: 3100, unit: "Ton", arrivals: "High", quality: "A" },
+    { crop: "Banana", basePrice: 2500, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Groundnut", basePrice: 5900, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Cotton", basePrice: 6650, unit: "Quintal", arrivals: "Medium", quality: "B" },
+  ],
+  "Telangana": [
+    { crop: "Cotton", basePrice: 6900, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Rice (Paddy)", basePrice: 2183, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Maize", basePrice: 1900, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Soybean", basePrice: 4550, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Chilli", basePrice: 11000, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Tripura": [
+    { crop: "Rice (Paddy)", basePrice: 2200, unit: "Quintal", arrivals: "High", quality: "B" },
+    { crop: "Jute", basePrice: 5000, unit: "Quintal", arrivals: "Medium", quality: "B" },
+    { crop: "Pineapple", basePrice: 3200, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Uttar Pradesh": [
+    { crop: "Wheat", basePrice: 2200, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Sugarcane", basePrice: 3150, unit: "Ton", arrivals: "Very High", quality: "A" },
+    { crop: "Potato", basePrice: 1050, unit: "Quintal", arrivals: "High", quality: "B" },
+    { crop: "Rice (Paddy)", basePrice: 2183, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Mustard", basePrice: 5500, unit: "Quintal", arrivals: "Medium", quality: "A" },
+  ],
+  "Uttarakhand": [
+    { crop: "Wheat", basePrice: 2250, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Rice (Paddy)", basePrice: 2200, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Lychee", basePrice: 7500, unit: "Quintal", arrivals: "Medium", quality: "A" },
+    { crop: "Apple", basePrice: 5800, unit: "Quintal", arrivals: "High", quality: "B" },
+  ],
+  "West Bengal": [
+    { crop: "Rice (Paddy)", basePrice: 2183, unit: "Quintal", arrivals: "Very High", quality: "A" },
+    { crop: "Jute", basePrice: 5300, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Potato", basePrice: 1050, unit: "Quintal", arrivals: "Very High", quality: "B" },
+    { crop: "Tea", basePrice: 17000, unit: "Quintal", arrivals: "High", quality: "A" },
+    { crop: "Mustard", basePrice: 5400, unit: "Quintal", arrivals: "Medium", quality: "B" },
   ],
 };
 

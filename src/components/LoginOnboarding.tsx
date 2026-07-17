@@ -9,20 +9,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { UserProfile } from "../types";
 import { TRANSLATIONS, LANGUAGES, LanguageCode } from "../translations";
 import { api } from "../utils/api";
+import { INDIAN_STATES, UNION_TERRITORIES } from "../utils/constants";
 
-// ── Complete list of Indian States & Union Territories ──────────────
-const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
-  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
-  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
-  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
-  "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  // Union Territories
-  "Andaman and Nicobar Islands", "Chandigarh",
-  "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
-  "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
-];
+
 
 // ── Predefined crop options (with "Other" at the end) ──────────────
 const CROP_OPTIONS = ["Cotton", "Tomato", "Wheat", "Soybean", "Sugarcane", "Onion", "Other"];
@@ -483,10 +472,17 @@ export default function LoginOnboarding({ onComplete, selectedLanguage, setLangu
                       }}
                       className="w-full h-14 bg-surface-elevated border border-border-subtle rounded-2xl px-4 text-body-md font-bold text-content-primary focus:outline-none focus:ring-2 focus:ring-signal-success/30 focus:border-signal-success transition-colors appearance-none"
                     >
-                      <option value="">-- Select State --</option>
-                      {INDIAN_STATES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
+                      <option value="">-- Select State / UT --</option>
+                      <optgroup label="States">
+                        {INDIAN_STATES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Union Territories">
+                        {UNION_TERRITORIES.map((ut) => (
+                          <option key={ut} value={ut}>{ut}</option>
+                        ))}
+                      </optgroup>
                     </select>
                   </div>
                   <div className="space-y-2">

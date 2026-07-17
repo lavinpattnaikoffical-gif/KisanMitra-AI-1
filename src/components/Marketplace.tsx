@@ -22,6 +22,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile, MarketProduct, MandiRate } from "../types";
 import { TRANSLATIONS, LanguageCode } from "../translations";
+import { INDIAN_STATES, UNION_TERRITORIES } from "../utils/constants";
 
 interface MarketplaceProps {
   profile: UserProfile;
@@ -187,10 +188,17 @@ export default function Marketplace({
                   onChange={(e) => setMandiState(e.target.value)}
                   className="bg-surface-base text-body-sm font-bold border border-border-subtle rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-signal-success/30 shadow-inner"
                 >
-                  <option value="Maharashtra">Maharashtra</option>
-                  <option value="Punjab">Punjab</option>
-                  <option value="Gujarat">Gujarat</option>
-                  <option value="Karnataka">Karnataka</option>
+                  <option value="">-- Select State / UT --</option>
+                  <optgroup label="States">
+                    {INDIAN_STATES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Union Territories">
+                    {UNION_TERRITORIES.map((ut) => (
+                      <option key={ut} value={ut}>{ut}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
